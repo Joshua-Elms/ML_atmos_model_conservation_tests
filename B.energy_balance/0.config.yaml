@@ -1,0 +1,16 @@
+experiment_dir: data/
+experiment_name: dT_5
+ic_dates: [
+  '2010-01-01T00z',
+  ]
+models: ["FuXi", "SFNO", "Pangu6x"]
+n_timesteps: 120
+device: cuda:0
+debug_run: False
+overwrite: True # change to false!
+surface_geopotential_path: "/N/slate/jmelms/projects/dcmip2025_idealized_tests/experiments/A.mass_conservation/surface_geopotential.nc"
+keep_base_fields: True
+temp_perturbation_degC: 5
+experiment_subdirectories: 
+  - "plots"
+ 
