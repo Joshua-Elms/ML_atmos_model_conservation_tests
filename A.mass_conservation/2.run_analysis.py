@@ -22,8 +22,8 @@ plot_var = "sp" # choose either "msl" or "ssp", can only use "ssp" if models = [
 cmap_str = "Dark2" # options here: matplotlib.org/stable/tutorials/colors/colormaps.html, if "single:" is included, only one color will be used
 day_interval_x_ticks = 15 # how many days between x-ticks on the plot
 spec_int = 5e-4
-individual_standardized_ylims = (984, 986) # (1011.5 - 1.5, 1011.5 + 1.5) # y-limits for the plot, set to None to use the model output min/max, normally (1010, 1014)
-mae_standardized_ylims = (0, 1) # y-limits for the MAE plot, set to None to use the model output min/max, normally (0, 5)
+individual_standardized_ylims = (976, 986) # (1011.5 - 1.5, 1011.5 + 1.5) # y-limits for the plot, set to None to use the model output min/max, normally (1010, 1014)
+mae_standardized_ylims = (0, 10) # y-limits for the MAE plot, set to None to use the model output min/max, normally (0, 5)
 mae_ground_truth = None # set None to use IC as ground truth for comparison or a number to use as a constant ground truth value
 show_legend = False
 plot_base_fields = False # whether to plot the base fields (pointwise data) for each model
@@ -76,7 +76,7 @@ for model in models:
     for i, ic in enumerate(ic_dates):
         model_linedat = ds[f"MEAN_{plot_var}"].isel(init_time=i).sel(lead_time=lead_times).squeeze()
         color = qual_colors[i]
-        ax.plot(lead_times, model_linedat, color=color, alpha=0.3, linewidth=linewidth, label=f"Forecast init   {ic.strftime('%Y-%m-%d %Hz')}", linestyle=fcst_linestyle)
+        ax.plot(lead_times, model_linedat, color=color, alpha=0.8, linewidth=linewidth, label=f"Forecast init   {ic.strftime('%Y-%m-%d %Hz')}", linestyle=fcst_linestyle)
         
     ens_mean = ds[f"MEAN_{plot_var}"].mean(dim="init_time").squeeze()
     # ax.plot(lead_times, ens_mean, color="red", linewidth=2*linewidth, label="Mean of forecast lines", linestyle=fcst_linestyle)

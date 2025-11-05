@@ -1,11 +1,11 @@
 experiment_dir: data/
-experiment_name: SFNO_intercompare
+experiment_name: SFNO_intercompare_dry
 ic_dates: [
   '2010-01-01T00z',
   '2010-07-01T00z'
   ]
-models: ["SFNO", "FCNv2_SM"] # and FCNv2_SM
-n_timesteps: 28
+models: ["FCNv2_SM", "SFNO"] # and FCNv2_SM
+n_timesteps: 360
 device: cuda:0
 debug_run: False
 overwrite: False # change to false!
