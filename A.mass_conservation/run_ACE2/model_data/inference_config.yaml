@@ -1,0 +1,22 @@
+experiment_dir: /N/slate/jmelms/projects/ML_atmos_model_conservation_tests/A.mass_conservation/run_ACE2/output
+n_forward_steps: 10 
+forward_steps_in_memory: 50
+checkpoint_path: /N/slate/jmelms/projects/ML_atmos_model_conservation_tests/A.mass_conservation/run_ACE2/model_data/ace2_era5_ckpt.tar
+logging:
+  log_to_screen: true
+  log_to_wandb: false
+  log_to_file: true
+  project: ace
+initial_condition:
+  path: /N/slate/jmelms/projects/ML_atmos_model_conservation_tests/A.mass_conservation/run_ACE2/model_data/initial_conditions/ic_2020.nc
+  start_indices:
+    times:
+      - "2020-01-01T00:00:00"
+forcing_loader:
+  dataset:
+    data_path: /N/slate/jmelms/projects/ML_atmos_model_conservation_tests/A.mass_conservation/run_ACE2/model_data/forcings
+  num_data_workers: 4
+data_writer:
+  save_prediction_files: true
+  save_monthly_files: false
+  names: ["TMP2m", "VGRD10m", "PRATEsfc"]

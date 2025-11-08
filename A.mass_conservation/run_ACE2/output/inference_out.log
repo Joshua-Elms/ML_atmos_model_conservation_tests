@@ -1,0 +1,80 @@
+2025-11-07 19:09:12,926 - root - WARNING - Environmental variable BEAKER_EXPERIMENT_ID not found.
+2025-11-07 19:09:12,927 - root - WARNING - Environmental variable SLURM_JOB_ID not found.
+2025-11-07 19:09:12,927 - root - WARNING - Environmental variable SLURM_JOB_USER not found.
+2025-11-07 19:09:12,927 - root - WARNING - Environmental variable FME_TRAIN_DIR not found.
+2025-11-07 19:09:12,927 - root - WARNING - Environmental variable FME_VALID_DIR not found.
+2025-11-07 19:09:12,927 - root - WARNING - Environmental variable FME_STATS_DIR not found.
+2025-11-07 19:09:12,927 - root - WARNING - Environmental variable FME_CHECKPOINT_DIR not found.
+2025-11-07 19:09:12,927 - root - WARNING - Environmental variable FME_OUTPUT_DIR not found.
+2025-11-07 19:09:12,927 - root - WARNING - Environmental variable FME_IMAGE not found.
+2025-11-07 19:09:12,927 - root - WARNING - Beaker Experiment ID not found.
+2025-11-07 19:09:12,931 - root - INFO - --------------- Versions ---------------
+2025-11-07 19:09:12,931 - root - INFO - Torch: 2.9.0+cu128
+2025-11-07 19:09:12,931 - root - INFO - ----------------------------------------
+2025-11-07 19:09:12,931 - root - INFO - Current device is cpu
+2025-11-07 19:09:12,931 - root - INFO - Loading trained model checkpoint from /N/slate/jmelms/projects/ML_atmos_model_conservation_tests/A.mass_conservation/run_ACE2/model_data/ace2_era5_ckpt.tar
+2025-11-07 19:09:13,415 - root - INFO - Initializing stepper from provided config
+2025-11-07 19:09:13,415 - root - INFO - Initializing stepper from provided config
+2025-11-07 19:09:18,149 - root - INFO - Loading initial condition data
+2025-11-07 19:09:18,305 - root - INFO - Loading trained model checkpoint from /N/slate/jmelms/projects/ML_atmos_model_conservation_tests/A.mass_conservation/run_ACE2/model_data/ace2_era5_ckpt.tar
+2025-11-07 19:09:18,811 - root - INFO - Initializing stepper from provided config
+2025-11-07 19:09:18,811 - root - INFO - Initializing stepper from provided config
+2025-11-07 19:09:23,545 - root - INFO - Initializing forcing data loader
+2025-11-07 19:14:58,708 - root - WARNING - Environmental variable BEAKER_EXPERIMENT_ID not found.
+2025-11-07 19:14:58,709 - root - INFO - Environmental variable SLURM_JOB_ID=7425427.
+2025-11-07 19:14:58,709 - root - INFO - Environmental variable SLURM_JOB_USER=jmelms.
+2025-11-07 19:14:58,709 - root - WARNING - Environmental variable FME_TRAIN_DIR not found.
+2025-11-07 19:14:58,709 - root - WARNING - Environmental variable FME_VALID_DIR not found.
+2025-11-07 19:14:58,709 - root - WARNING - Environmental variable FME_STATS_DIR not found.
+2025-11-07 19:14:58,709 - root - WARNING - Environmental variable FME_CHECKPOINT_DIR not found.
+2025-11-07 19:14:58,709 - root - WARNING - Environmental variable FME_OUTPUT_DIR not found.
+2025-11-07 19:14:58,709 - root - WARNING - Environmental variable FME_IMAGE not found.
+2025-11-07 19:14:58,709 - root - WARNING - Beaker Experiment ID not found.
+2025-11-07 19:14:58,913 - root - INFO - --------------- Versions ---------------
+2025-11-07 19:14:58,913 - root - INFO - Torch: 2.9.0+cu128
+2025-11-07 19:14:58,913 - root - INFO - ----------------------------------------
+2025-11-07 19:14:58,913 - root - INFO - Current device is cuda:0
+2025-11-07 19:14:58,913 - root - INFO - Loading trained model checkpoint from /N/slate/jmelms/projects/ML_atmos_model_conservation_tests/A.mass_conservation/run_ACE2/model_data/ace2_era5_ckpt.tar
+2025-11-07 19:15:05,512 - root - INFO - Initializing stepper from provided config
+2025-11-07 19:15:05,512 - root - INFO - Initializing stepper from provided config
+2025-11-07 19:15:12,689 - root - INFO - Loading initial condition data
+2025-11-07 19:15:14,926 - root - INFO - Loading trained model checkpoint from /N/slate/jmelms/projects/ML_atmos_model_conservation_tests/A.mass_conservation/run_ACE2/model_data/ace2_era5_ckpt.tar
+2025-11-07 19:15:16,167 - root - INFO - Initializing stepper from provided config
+2025-11-07 19:15:16,168 - root - INFO - Initializing stepper from provided config
+2025-11-07 19:15:21,848 - root - INFO - Initializing forcing data loader
+2025-11-07 19:15:21,900 - root - INFO - Opening data at /N/slate/jmelms/projects/ML_atmos_model_conservation_tests/A.mass_conservation/run_ACE2/model_data/forcings/*.nc
+2025-11-07 19:15:22,141 - root - INFO - Found 1414 samples.
+2025-11-07 19:15:22,156 - root - INFO - Initialized MaskProvider(
+    masks=[
+        ,
+    ]
+).
+2025-11-07 19:15:22,156 - root - INFO - Horizontal coordinate sizes are {'lat': 180, 'lon': 360}.
+2025-11-07 19:15:22,171 - root - INFO - The required variables have been found in the dataset: ['ocean_fraction', 'DSWRFtoa', 'sea_ice_fraction', 'HGTsfc', 'surface_temperature', 'global_mean_co2', 'land_fraction'].
+2025-11-07 19:15:22,187 - root - INFO - Opening data at /N/slate/jmelms/projects/ML_atmos_model_conservation_tests/A.mass_conservation/run_ACE2/model_data/forcings/*.nc
+2025-11-07 19:15:22,225 - root - INFO - Found 1414 samples.
+2025-11-07 19:15:22,238 - root - INFO - Initialized MaskProvider(
+    masks=[
+        ,
+    ]
+).
+2025-11-07 19:15:22,239 - root - INFO - Horizontal coordinate sizes are {'lat': 180, 'lon': 360}.
+2025-11-07 19:15:22,253 - root - INFO - The required variables have been found in the dataset: ['ocean_fraction', 'DSWRFtoa', 'sea_ice_fraction', 'HGTsfc', 'surface_temperature', 'global_mean_co2', 'land_fraction'].
+2025-11-07 19:15:22,305 - root - INFO - Multiprocessing inference context: fork
+2025-11-07 19:15:22,402 - root - WARNING - Variable metadata for the following stepper variables were not found in the variable metadata of the forcing dataset or stepper: {'air_temperature_1', 'eastward_wind_0', 'specific_total_water_1', 'northward_wind_7', 'USWRFtoa', 'northward_wind_6', 'northward_wind_1', 'ULWRFsfc', 'PRATEsfc', 'LHTFLsfc', 'air_temperature_3', 'USWRFsfc', 'DSWRFsfc', 'tendency_of_total_water_path_due_to_advection', 'specific_total_water_5', 'air_temperature_4', 'specific_total_water_0', 'specific_total_water_6', 'northward_wind_4', 'PRESsfc', 'northward_wind_2', 'Q2m', 'specific_total_water_7', 'UGRD10m', 'ULWRFtoa', 'specific_total_water_2', 'northward_wind_3', 'TMP2m', 'DLWRFsfc', 'air_temperature_0', 'northward_wind_5', 'h500', 'VGRD10m', 'SHTFLsfc', 'eastward_wind_3', 'TMP850', 'eastward_wind_1', 'air_temperature_6', 'eastward_wind_5', 'specific_total_water_3', 'air_temperature_5', 'northward_wind_0', 'air_temperature_7', 'specific_total_water_4', 'eastward_wind_2', 'eastward_wind_6', 'eastward_wind_4', 'air_temperature_2', 'eastward_wind_7'}. Using default values for these variables instead. Users should ensure that the default values are consistent with the training dataset of the stepper.
+2025-11-07 19:15:24,037 - root - INFO - Starting inference
+2025-11-07 19:15:40,671 - root - INFO - Inference: processing output from window 1 of 1.
+2025-11-07 19:15:41,345 - root - INFO - Starting final flush of data writer
+2025-11-07 19:15:41,347 - root - INFO - Writing reduced metrics to disk in netcdf format.
+2025-11-07 19:15:41,600 - root - INFO - inference duration: 42.89s
+2025-11-07 19:15:41,600 - root - INFO - initialization duration: 25.33s
+2025-11-07 19:15:41,600 - root - INFO - aggregator duration: 1.55s
+2025-11-07 19:15:41,600 - root - INFO - wandb_logging duration: 0.00s
+2025-11-07 19:15:41,600 - root - INFO - data_writer duration: 0.24s
+2025-11-07 19:15:41,600 - root - INFO - data_loading duration: 0.06s
+2025-11-07 19:15:41,600 - root - INFO - forward_prediction duration: 14.17s
+2025-11-07 19:15:41,601 - root - INFO - compute_derived_variables duration: 1.17s
+2025-11-07 19:15:41,601 - root - INFO - final_writer_flush duration: 0.26s
+2025-11-07 19:15:41,601 - root - INFO - Total steps per second (ignoring wandb logging): 0.23 steps/second
+2025-11-07 19:15:41,601 - root - INFO - Getting summary logs for time_mean aggregator
+2025-11-07 19:15:46,373 - root - INFO - Getting summary logs for annual aggregator

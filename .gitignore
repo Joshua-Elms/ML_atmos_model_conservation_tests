@@ -7,3 +7,5 @@ plots/
 *.err
 data/
 
+ace2venv/
+*.tar

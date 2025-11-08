@@ -1,14 +1,14 @@
 experiment_dir: data/
-experiment_name: SFNO_intercompare_dry
+experiment_name: test
 ic_dates: [
   '2010-01-01T00z',
   '2010-07-01T00z'
   ]
-models: ["FCNv2_SM", "SFNO"] # and FCNv2_SM
-n_timesteps: 360
+models: ["SFNO"] # and FCNv2_SM
+n_timesteps: 10
 device: cuda:0
 debug_run: False
-overwrite: False # change to false!
+overwrite: True # change to false!
 keep_vars: ["sp", "msl", "ssp"]
 surface_geopotential_path: "/N/slate/jmelms/projects/dcmip2025_idealized_tests/experiments/A.mass_conservation/surface_geopotential.nc"
 pressure_multiplier: 1.0
