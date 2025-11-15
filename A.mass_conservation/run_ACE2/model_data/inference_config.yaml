@@ -1,5 +1,5 @@
 experiment_dir: /N/slate/jmelms/projects/ML_atmos_model_conservation_tests/A.mass_conservation/run_ACE2/output
-n_forward_steps: 10 
+n_forward_steps: 361 # one more than e2s to include IC
 forward_steps_in_memory: 50
 checkpoint_path: /N/slate/jmelms/projects/ML_atmos_model_conservation_tests/A.mass_conservation/run_ACE2/model_data/ace2_era5_ckpt.tar
 logging:
@@ -12,6 +12,7 @@ initial_condition:
   start_indices:
     times:
       - "2020-01-01T00:00:00"
+      - "2020-07-01T00:00:00"
 forcing_loader:
   dataset:
     data_path: /N/slate/jmelms/projects/ML_atmos_model_conservation_tests/A.mass_conservation/run_ACE2/model_data/forcings
@@ -19,4 +20,15 @@ forcing_loader:
 data_writer:
   save_prediction_files: true
   save_monthly_files: false
-  names: ["TMP2m", "VGRD10m", "PRATEsfc"]
+  names: [
+    "specific_total_water_0",
+    "specific_total_water_1",
+    "specific_total_water_2",
+    "specific_total_water_3",
+    "specific_total_water_4",
+    "specific_total_water_5",
+    "specific_total_water_6",
+    "specific_total_water_7",
+    "Q2m", 
+    "PRESsfc",
+    ]
