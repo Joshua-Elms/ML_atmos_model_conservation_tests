@@ -136,7 +136,7 @@ def prepare_output_directory(config: dict) -> Path:
 
 def load_model(model_name: str) -> PrognosticModel:
     """Load a model by name. Currently loads default model weights from cache, or downloads them to cache if not present."""
-    load_dotenv()
+    load_dotenv(override=True)
     if model_name not in model_info.SUPPORTED_MODELS:
         raise ValueError(
             f"Model '{model_name}' is not supported. Supported models are: {model_info.SUPPORTED_MODELS}."
@@ -299,7 +299,9 @@ def run_deterministic_w_perturbations(
         tend = states[0] - states[1]
 
         # set the tendency of static variables to 0
-        idx = np.nonzero(np.array(model_info.MODEL_VARIABLES[model_name]["types"]) == model_info.IN)[0]
+        idx = np.nonzero(
+            np.array(model_info.MODEL_VARIABLES[model_name]["types"]) == model_info.IN
+        )[0]
         if len(idx) > 0:
             tend[..., idx, :, :] = 0
 
@@ -645,7 +647,7 @@ def gen_baroclinic_wave_perturbation(
 
 
 def sort_latitudes(ds: xr.Dataset, model_name: str, input: bool):
-    
+
     default_lat_direction = "ascending"
     if input:
         lat_direction = model_info.MODEL_LATITUDE_ORDERING[model_name]
@@ -667,9 +669,10 @@ def sort_latitudes(ds: xr.Dataset, model_name: str, input: bool):
 
     return ds
 
+
 if __name__ == "__main__":
     # test of latitude_weighted_mean function
-    
+
     ### test 1: uniform random 0-1 data, should get ~0.5 back
     lat = np.linspace(-90, 90, 181)
     data = np.random.rand(181, 3600)
@@ -683,7 +686,7 @@ if __name__ == "__main__":
     )
     lw_mean = latitude_weighted_mean(da, latitudes=lat)
     print(f"Test 1: mean should be ~0.5, got {lw_mean.values}")
-    
+
     ### test 2: set latitude bands to known values, should get weighted average back
     # area ~ cos(lat), so for lat = [-90, 0, 90], weights are [0, 1, 0], so mean should be equator value
     lat = np.array([-90, 0, 90])
@@ -698,7 +701,7 @@ if __name__ == "__main__":
     )
     lw_mean = latitude_weighted_mean(da, latitudes=lat)
     print(f"Test 2: mean should be 1.0, got {lw_mean.values}")
-    
+
     ### test 3: set latitude bands to known values, should get weighted average back
     # area ~ cos(lat), so for lat = [-60, 0, 60], weights are [0.5, 1, 0.5]
     lat = np.array([-60, 0, 60])
