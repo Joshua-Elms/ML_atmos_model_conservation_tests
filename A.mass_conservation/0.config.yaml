@@ -1,16 +1,17 @@
 experiment_dir: data/
-experiment_name: nt=720_nic=2_NO_GCO
+experiment_name: nt=12_nic=2_NO_GCO
 ic_dates: [
   '2020-01-01T00z',
   '2020-07-01T00z'
   ]
-models: ["FuXi", "FuXiShort", "FCN", "SFNO", "FCN3", "Pangu6", "Pangu6x"]
-n_timesteps: 720
+models: ["FuXi", "FuXiShort", "SFNO", "Pangu6", "Pangu6x"]
+n_timesteps: 12
 device: cuda:0
 debug_run: False
-overwrite: False # change to false!
+overwrite: True # change to false!
 keep_vars: ["sp", "msl", "ssp"]
 surface_geopotential_path: "/N/slate/jmelms/projects/ML_atmos_model_conservation_tests/A.mass_conservation/surface_geopotential.nc"
+pressure_multiplier: 1.0
 keep_base_fields: False
 experiment_subdirectories: 
   - "plots"

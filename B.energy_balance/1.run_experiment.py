@@ -148,7 +148,7 @@ def run_experiment(model_name: str, config_path: str) -> str:
         # Set constants
         cp = 1005.0  # J/kg/K
         g = 9.81  # m/s^2
-        Lv = 2.26e6  # J/kg
+        Lv = 2.5e6  # J/kg
         sb_const = 5.670374419e-8  # W/m^2/K^4, from https://physics.nist.gov/cgi-bin/cuu/Value?sigma
 
         ### Step 4b: Get pressure for integration ###

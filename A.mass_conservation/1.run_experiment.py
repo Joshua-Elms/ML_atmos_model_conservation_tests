@@ -52,7 +52,7 @@ def run_experiment(model_name: str, config_path: str) -> str:
     # all variables requested in config
     model_vars = model_info.MODEL_VARIABLES[model_name]["names"]
     keep_vars = [var for var in config["keep_vars"] if var in model_vars + ["ssp"]]
-    req_vars = ["msl", "t2m"]
+    req_vars = ["msl", "t2m"] + []
 
     ds_list = []
 
@@ -111,7 +111,7 @@ def run_experiment(model_name: str, config_path: str) -> str:
         extract_vars += rh_vars + q_vars
         if tcw_present:
             extract_vars.append("tcwv")
-        tmp_ds = xr.open_dataset(fpath)[extract_vars]
+        tmp_ds = xr.open_dataset(fpath)
 
         # add synthetic SP variable if requested
         if "ssp" in keep_vars_cp:
@@ -156,12 +156,13 @@ def run_experiment(model_name: str, config_path: str) -> str:
                 if t_var in tmp_ds.data_vars and rh_var in tmp_ds.data_vars:
                     T = tmp_ds[t_var] * metpy.units.units("K")  # K
                     r = tmp_ds[rh_var] * metpy.units.units.percent  # %
+                    # clip below 0. this will cause nan td, so we'll then replace those with 0 q.
+                    r = r.clip(min=0.0 * metpy.units.units.percent)
                     td = metpy.calc.dewpoint_from_relative_humidity(T, r)
-                    q = (
-                        metpy.calc.specific_humidity_from_dewpoint(p, td, phase="auto")
-                        .to("kg/kg")
-                        .magnitude
-                    )
+                    q = metpy.calc.specific_humidity_from_dewpoint(
+                        p, td, phase="auto"
+                    ).metpy.magnitude
+                    q = np.nan_to_num(q, nan=0.0)
                     tmp_ds[f"q{level}"] = (tmp_ds[rh_var].dims, q)
         else:
             print(
@@ -177,7 +178,7 @@ def run_experiment(model_name: str, config_path: str) -> str:
             q_dat = [tmp_ds[f"q{level}"] for level in q_levels]
             Q = xr.concat(q_dat, dim="level").assign_coords(level=model_levels)
             tcwv = (1 / g) * scipy.integrate.trapezoid(Q, levs_Pa, axis=0)
-            tmp_ds["tcwv"] = (Q.dims, tcwv)
+            tmp_ds["tcwv"] = (Q.dims[1:], tcwv)
             moisture_var = "tcwv"
 
         if moisture_var is None:
