@@ -1,5 +1,5 @@
 experiment_dir: /N/slate/jmelms/projects/ML_atmos_model_conservation_tests/A.mass_conservation/run_ACE2/output
-n_forward_steps: 13
+n_forward_steps: 361
 forward_steps_in_memory: 50
 checkpoint_path: /N/slate/jmelms/projects/ML_atmos_model_conservation_tests/A.mass_conservation/run_ACE2/model_data/ace2_era5_ckpt.tar
 logging:

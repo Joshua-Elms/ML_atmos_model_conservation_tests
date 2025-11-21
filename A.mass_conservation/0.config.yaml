@@ -1,18 +1,19 @@
 experiment_dir: data/
-experiment_name: nt=12_nic=2_NO_GCO
+experiment_name: SFNO_FCNv2_ACE2
 ic_dates: [
   '2020-01-01T00z',
   '2020-07-01T00z'
   ]
-models: ["FuXi", "FuXiShort", "SFNO", "Pangu6", "Pangu6x"]
-n_timesteps: 12
+models: ["SFNO", ] # ["SFNO"] or ["SFNO", "FCNv2_SM", "ACE2"]
+n_timesteps: 360
 device: cuda:0
 debug_run: False
-overwrite: True # change to false!
+overwrite: False # change to false!
 keep_vars: ["sp", "msl", "ssp"]
-surface_geopotential_path: "/N/slate/jmelms/projects/ML_atmos_model_conservation_tests/A.mass_conservation/surface_geopotential.nc"
+surface_geopotential_path: "/N/slate/jmelms/projects/dcmip2025_idealized_tests/experiments/A.mass_conservation/surface_geopotential.nc"
 pressure_multiplier: 1.0
 keep_base_fields: False
+compute_sp_moist: True
 experiment_subdirectories: 
   - "plots"
  

@@ -130,68 +130,71 @@ def run_experiment(model_name: str, config_path: str) -> str:
             ssp = p0 * (T2M / (T2M + lapse_rate * zs)) ** exponent
             tmp_ds["ssp"] = ssp
 
-        # check for relative humidity variable, compute q if present
-        rh_vars = [var for var in model_vars if "r" in var and var[1:].isdigit()]
-        q_vars = [var for var in model_vars if "q" in var and var[1:].isdigit()]
-        tcw_present = "tcwv" in model_vars
-        if tcw_present:
-            print(
-                "Total column water (tcwv) present; skipping r -> q, q -> tcw conversion."
-            )
-            moisture_var = "tcwv"
-        elif len(q_vars) >= 2:
-            print(
-                "Specific humidity (q) variables already present; skipping r -> q conversion."
-            )
-            moisture_var = "q"
-        elif len(rh_vars) >= 2:
-            print(
-                "Relative humidity (r) variables present; computing specific humidity (q) from r."
-            )
-            moisture_var = "q"
-            for rh_var in rh_vars:
-                level = rh_var[1:]
-                p = int(level) * metpy.units.units("hPa")  # convert hPa to Pa
-                t_var = f"t{level}"
-                if t_var in tmp_ds.data_vars and rh_var in tmp_ds.data_vars:
-                    T = tmp_ds[t_var] * metpy.units.units("K")  # K
-                    r = tmp_ds[rh_var] * metpy.units.units.percent  # %
-                    # clip below 0. this will cause nan td, so we'll then replace those with 0 q.
-                    r = r.clip(min=0.0 * metpy.units.units.percent)
-                    td = metpy.calc.dewpoint_from_relative_humidity(T, r)
-                    q = metpy.calc.specific_humidity_from_dewpoint(
-                        p, td, phase="auto"
-                    ).metpy.magnitude
-                    q = np.nan_to_num(q, nan=0.0)
-                    tmp_ds[f"q{level}"] = (tmp_ds[rh_var].dims, q)
-        else:
-            print(
-                "No moisture variable (tcwv, q, or r) present, var sp_moist will be missing."
-            )
-            moisture_var = None
 
-        if moisture_var == "q":
-            print("Computing total column water (tcwv) from specific humidity (q).")
-            model_levels = model_info.STANDARD_13_LEVELS
-            levs_Pa = np.array(model_levels) * metpy.units.units("hPa")
-            q_levels = [level for level in model_levels if f"q{level}" in tmp_ds]
-            q_dat = [tmp_ds[f"q{level}"] for level in q_levels]
-            Q = xr.concat(q_dat, dim="level").assign_coords(level=model_levels)
-            tcwv = (1 / g) * scipy.integrate.trapezoid(Q, levs_Pa, axis=0)
-            tmp_ds["tcwv"] = (Q.dims[1:], tcwv)
-            moisture_var = "tcwv"
+        if config["compute_sp_moist"]:
+            print("Computing sp_moist variable.")
+            # check for relative humidity variable, compute q if present
+            rh_vars = [var for var in model_vars if "r" in var and var[1:].isdigit()]
+            q_vars = [var for var in model_vars if "q" in var and var[1:].isdigit()]
+            tcw_present = "tcwv" in model_vars
+            if tcw_present:
+                print(
+                    "Total column water (tcwv) present; skipping r -> q, q -> tcw conversion."
+                )
+                moisture_var = "tcwv"
+            elif len(q_vars) >= 2:
+                print(
+                    "Specific humidity (q) variables already present; skipping r -> q conversion."
+                )
+                moisture_var = "q"
+            elif len(rh_vars) >= 2:
+                print(
+                    "Relative humidity (r) variables present; computing specific humidity (q) from r."
+                )
+                moisture_var = "q"
+                for rh_var in rh_vars:
+                    level = rh_var[1:]
+                    p = int(level) * metpy.units.units("hPa")  # convert hPa to Pa
+                    t_var = f"t{level}"
+                    if t_var in tmp_ds.data_vars and rh_var in tmp_ds.data_vars:
+                        T = tmp_ds[t_var] * metpy.units.units("K")  # K
+                        r = tmp_ds[rh_var] * metpy.units.units.percent  # %
+                        # clip below 0. this will cause nan td, so we'll then replace those with 0 q.
+                        r = r.clip(min=0.0 * metpy.units.units.percent)
+                        td = metpy.calc.dewpoint_from_relative_humidity(T, r)
+                        q = metpy.calc.specific_humidity_from_dewpoint(
+                            p, td, phase="auto"
+                        ).metpy.magnitude
+                        q = np.nan_to_num(q, nan=0.0)
+                        tmp_ds[f"q{level}"] = (tmp_ds[rh_var].dims, q)
+            else:
+                print(
+                    "No moisture variable (tcwv, q, or r) present, var sp_moist will be missing."
+                )
+                moisture_var = None
 
-        if moisture_var is None:
-            print("Moisture variable not available; skipping sp_moist calculation.")
+            if moisture_var == "q":
+                print("Computing total column water (tcwv) from specific humidity (q).")
+                model_levels = model_info.STANDARD_13_LEVELS
+                levs_Pa = np.array(model_levels) * metpy.units.units("hPa")
+                q_levels = [level for level in model_levels if f"q{level}" in tmp_ds]
+                q_dat = [tmp_ds[f"q{level}"] for level in q_levels]
+                Q = xr.concat(q_dat, dim="level").assign_coords(level=model_levels)
+                tcwv = (1 / g) * scipy.integrate.trapezoid(Q, levs_Pa, axis=0)
+                tmp_ds["tcwv"] = (Q.dims[1:], tcwv)
+                moisture_var = "tcwv"
 
-        elif moisture_var == "tcwv":
-            print(
-                "Using total column water (tcwv) for moisture variable in sp_moist calculation."
-            )
-            tmp_ds["sp_moist"] = g * tmp_ds["tcwv"]  # in Pa
-            keep_vars_cp.append("sp_moist")
+            if moisture_var is None:
+                print("Moisture variable not available; skipping sp_moist calculation.")
 
-        tmp_ds = tmp_ds[keep_vars_cp]
+            elif moisture_var == "tcwv":
+                print(
+                    "Using total column water (tcwv) for moisture variable in sp_moist calculation."
+                )
+                tmp_ds["sp_moist"] = g * tmp_ds["tcwv"]  # in Pa
+                keep_vars_cp.append("sp_moist")
+
+            tmp_ds = tmp_ds[keep_vars_cp]
 
         # sort by latitude
         tmp_ds = general.sort_latitudes(tmp_ds, model_name, input=False)
