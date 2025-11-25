@@ -4,7 +4,7 @@ ic_dates: [
   '2020-01-01T00z',
   '2020-07-01T00z'
   ]
-models: ["SFNO", ] # ["SFNO"] or ["SFNO", "FCNv2_SM", "ACE2"]
+models: ["SFNO", "ACE2"] # ["SFNO"] or ["SFNO", "FCNv2_SM", "ACE2"]
 n_timesteps: 360
 device: cuda:0
 debug_run: False

@@ -24,11 +24,13 @@ ds = ds.rename_vars(
         "VGRD10m": "northward_wind_8",
     }
 )
-init_time_coord = ds["init_time"].values
+# for some reasons ACE2 thinks that an init_time in the config is 6 hours later than it actually is
+# not super important for results anyway, since it's a conservative model and shows no diurnality
+init_time_coord = ds["init_time"].values - np.timedelta64(6, "h")
 ds = ds.drop_vars("init_time")
 ds = ds.rename_dims({"sample": "init_time"})
 ds = ds.rename({"time": "lead_time"})
-lead_time_hours = ds["lead_time"].values.astype(int) / 1e9 / 3600  # ns to hours
+lead_time_hours = (ds["lead_time"].values.astype(int) / 1e9 / 3600).astype(int)  # ns to hours
 ds = ds.assign_coords(init_time=init_time_coord, lead_time=lead_time_hours)
 levs = [0, 1, 2, 3, 4, 5, 6, 7, 8]
 ak = xr.DataArray(ic_ds["ak"].values, dims=["level"], coords={"level": levs})

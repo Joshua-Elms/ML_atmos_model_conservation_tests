@@ -1505,3 +1505,68 @@
 2025-11-21 16:57:42,371 - root - INFO - Total steps per second (ignoring wandb logging): 8.34 steps/second
 2025-11-21 16:57:42,371 - root - INFO - Getting summary logs for time_mean aggregator
 2025-11-21 16:57:46,139 - root - INFO - Getting summary logs for annual aggregator
+2025-11-22 12:45:17,908 - root - WARNING - Environmental variable BEAKER_EXPERIMENT_ID not found.
+2025-11-22 12:45:17,967 - root - INFO - Environmental variable SLURM_JOB_ID=7528802.
+2025-11-22 12:45:17,967 - root - INFO - Environmental variable SLURM_JOB_USER=jmelms.
+2025-11-22 12:45:17,967 - root - WARNING - Environmental variable FME_TRAIN_DIR not found.
+2025-11-22 12:45:17,967 - root - WARNING - Environmental variable FME_VALID_DIR not found.
+2025-11-22 12:45:17,967 - root - WARNING - Environmental variable FME_STATS_DIR not found.
+2025-11-22 12:45:17,967 - root - WARNING - Environmental variable FME_CHECKPOINT_DIR not found.
+2025-11-22 12:45:17,967 - root - WARNING - Environmental variable FME_OUTPUT_DIR not found.
+2025-11-22 12:45:17,968 - root - WARNING - Environmental variable FME_IMAGE not found.
+2025-11-22 12:45:17,968 - root - WARNING - Beaker Experiment ID not found.
+2025-11-22 12:45:18,201 - root - INFO - --------------- Versions ---------------
+2025-11-22 12:45:18,202 - root - INFO - Torch: 2.9.0+cu128
+2025-11-22 12:45:18,202 - root - INFO - ----------------------------------------
+2025-11-22 12:45:18,202 - root - INFO - Current device is cuda:0
+2025-11-22 12:45:18,202 - root - INFO - Loading trained model checkpoint from /N/slate/jmelms/projects/ML_atmos_model_conservation_tests/A.mass_conservation/run_ACE2/model_data/ace2_era5_ckpt.tar
+2025-11-22 12:45:26,233 - root - INFO - Initializing stepper from provided config
+2025-11-22 12:45:26,233 - root - INFO - Initializing stepper from provided config
+2025-11-22 12:45:33,679 - root - INFO - Loading initial condition data
+2025-11-22 12:45:36,416 - root - INFO - Loading trained model checkpoint from /N/slate/jmelms/projects/ML_atmos_model_conservation_tests/A.mass_conservation/run_ACE2/model_data/ace2_era5_ckpt.tar
+2025-11-22 12:45:37,641 - root - INFO - Initializing stepper from provided config
+2025-11-22 12:45:37,641 - root - INFO - Initializing stepper from provided config
+2025-11-22 12:45:43,186 - root - INFO - Initializing forcing data loader
+2025-11-22 12:45:43,264 - root - INFO - Opening data at /N/slate/jmelms/projects/ML_atmos_model_conservation_tests/A.mass_conservation/run_ACE2/model_data/forcings/*.nc
+2025-11-22 12:45:43,539 - root - INFO - Found 1414 samples.
+2025-11-22 12:45:43,572 - root - INFO - Initialized MaskProvider(
+    masks=[
+        ,
+    ]
+).
+2025-11-22 12:45:43,573 - root - INFO - Horizontal coordinate sizes are {'lat': 180, 'lon': 360}.
+2025-11-22 12:45:43,605 - root - INFO - The required variables have been found in the dataset: ['DSWRFtoa', 'land_fraction', 'global_mean_co2', 'surface_temperature', 'ocean_fraction', 'HGTsfc', 'sea_ice_fraction'].
+2025-11-22 12:45:43,696 - root - INFO - Opening data at /N/slate/jmelms/projects/ML_atmos_model_conservation_tests/A.mass_conservation/run_ACE2/model_data/forcings/*.nc
+2025-11-22 12:45:43,772 - root - INFO - Found 1414 samples.
+2025-11-22 12:45:43,806 - root - INFO - Initialized MaskProvider(
+    masks=[
+        ,
+    ]
+).
+2025-11-22 12:45:43,806 - root - INFO - Horizontal coordinate sizes are {'lat': 180, 'lon': 360}.
+2025-11-22 12:45:43,838 - root - INFO - The required variables have been found in the dataset: ['DSWRFtoa', 'land_fraction', 'global_mean_co2', 'surface_temperature', 'ocean_fraction', 'HGTsfc', 'sea_ice_fraction'].
+2025-11-22 12:45:43,922 - root - INFO - Multiprocessing inference context: fork
+2025-11-22 12:45:44,025 - root - WARNING - Variable metadata for the following stepper variables were not found in the variable metadata of the forcing dataset or stepper: {'eastward_wind_4', 'ULWRFtoa', 'northward_wind_1', 'eastward_wind_0', 'northward_wind_5', 'specific_total_water_7', 'UGRD10m', 'eastward_wind_7', 'eastward_wind_2', 'SHTFLsfc', 'TMP850', 'air_temperature_2', 'tendency_of_total_water_path_due_to_advection', 'specific_total_water_1', 'VGRD10m', 'eastward_wind_5', 'ULWRFsfc', 'northward_wind_7', 'TMP2m', 'northward_wind_0', 'eastward_wind_1', 'air_temperature_6', 'eastward_wind_6', 'DLWRFsfc', 'USWRFsfc', 'specific_total_water_0', 'air_temperature_7', 'northward_wind_3', 'h500', 'air_temperature_4', 'air_temperature_3', 'specific_total_water_3', 'specific_total_water_4', 'specific_total_water_6', 'PRATEsfc', 'northward_wind_6', 'air_temperature_1', 'specific_total_water_2', 'DSWRFsfc', 'air_temperature_5', 'LHTFLsfc', 'Q2m', 'northward_wind_2', 'northward_wind_4', 'eastward_wind_3', 'air_temperature_0', 'USWRFtoa', 'PRESsfc', 'specific_total_water_5'}. Using default values for these variables instead. Users should ensure that the default values are consistent with the training dataset of the stepper.
+2025-11-22 12:45:48,296 - root - INFO - Starting inference
+2025-11-22 12:46:37,232 - root - INFO - Inference: processing output from window 1 of 8.
+2025-11-22 12:47:09,886 - root - INFO - Inference: processing output from window 2 of 8.
+2025-11-22 12:47:40,178 - root - INFO - Inference: processing output from window 3 of 8.
+2025-11-22 12:48:10,854 - root - INFO - Inference: processing output from window 4 of 8.
+2025-11-22 12:48:41,094 - root - INFO - Inference: processing output from window 5 of 8.
+2025-11-22 12:49:11,539 - root - INFO - Inference: processing output from window 6 of 8.
+2025-11-22 12:49:42,135 - root - INFO - Inference: processing output from window 7 of 8.
+2025-11-22 12:49:50,452 - root - INFO - Inference: processing output from window 8 of 8.
+2025-11-22 12:49:51,091 - root - INFO - Starting final flush of data writer
+2025-11-22 12:49:51,099 - root - INFO - Writing reduced metrics to disk in netcdf format.
+2025-11-22 12:49:51,602 - root - INFO - inference duration: 273.70s
+2025-11-22 12:49:51,603 - root - INFO - initialization duration: 30.39s
+2025-11-22 12:49:51,603 - root - INFO - aggregator duration: 4.29s
+2025-11-22 12:49:51,603 - root - INFO - wandb_logging duration: 0.01s
+2025-11-22 12:49:51,603 - root - INFO - data_writer duration: 14.06s
+2025-11-22 12:49:51,603 - root - INFO - data_loading duration: 0.59s
+2025-11-22 12:49:51,603 - root - INFO - forward_prediction duration: 212.59s
+2025-11-22 12:49:51,603 - root - INFO - compute_derived_variables duration: 10.61s
+2025-11-22 12:49:51,603 - root - INFO - final_writer_flush duration: 0.51s
+2025-11-22 12:49:51,603 - root - INFO - Total steps per second (ignoring wandb logging): 2.64 steps/second
+2025-11-22 12:49:51,603 - root - INFO - Getting summary logs for time_mean aggregator
+2025-11-22 12:49:56,780 - root - INFO - Getting summary logs for annual aggregator

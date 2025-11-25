@@ -27,10 +27,7 @@ display_var = (
 cmap_str = "brg"  # options here: matplotlib.org/stable/tutorials/colors/colormaps.html
 weird_color_const = 1  # unsure how this works, but it spaces out colors better when there are many models and inits
 day_interval_x_ticks = 15  # how many days between x-ticks on the plot
-standardized_ylims = (
-    975,
-    986,
-)  # y-limits for the plot, set to None to use the model output min/max, normally (1010, 1014)
+standardized_ylims = None  # (975,986,) # y-limits for the plot, set to None to use the model output min/max, normally (1010, 1014)
 conservation_half_range = 3  # hPa
 show_legend = True
 legend_ncols = 3
@@ -65,8 +62,6 @@ ds = (
 # }
 # models = [rename_dict.get(m, m) for m in models]
 # ds = ds.assign_coords(model=[rename_dict.get(m, m) for m in ds.model.values])
-# n_timesteps = 5 ###DEBUG
-# lead_times = lead_times[:n_timesteps+1]###DEBUG
 ##############################################
 
 fig, ax = plt.subplots(figsize=(12.5, 6.5))
@@ -82,7 +77,9 @@ color_indices = np.concatenate(
     (base_color_indices, base_color_indices + dx / (weird_color_const * n_ics))
 ).T
 qual_colors = colormaps.get_cmap(cmap_str)(color_indices)
-qual_colors = np.array(colormaps.get_cmap("tab10").colors).reshape(-1, n_ics, 3)[:n_models, :]
+qual_colors = np.array(colormaps.get_cmap("tab10").colors).reshape(-1, n_ics, 3)[
+    :n_models, :
+]
 linewidth = 2
 fontsize = 24
 smallsize = 20
@@ -127,13 +124,15 @@ ax.plot(
 ### Loop through each model and plot the results ###
 for m, model in enumerate(models):
     ### Load model output data ###
-    data_path = exp_dir / f"{model}_output.nc"  # where output data is stored
-    print(f"Loading data from {data_path}")
+    # data_path = exp_dir / f"{model}_output.nc"  # where output data is stored
+    # ds = xr.open_dataset(data_path)
+    # print(f"Loading data from {data_path}")
     ##############################################
 
     ### Plot the results ####################
 
     for i, ic in enumerate(ic_dates):
+        breakpoint()
         model_linedat = (
             ds[f"MEAN_{plot_var}"].sel(model=model).isel(init_time=i).squeeze()
         )

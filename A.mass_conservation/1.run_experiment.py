@@ -62,7 +62,8 @@ def run_experiment(model_name: str, config_path: str) -> str:
         fpath = tmp_output_files[i]
 
         # interface between model and data
-        io = NetCDF4Backend(fpath)
+        io_type = "xarray" # options: 'netcdf4', 'xarray'
+        io = XarrayBackend() if io_type == "xarray" else NetCDF4Backend(fpath)
 
         # get ERA5 data from the ECMWF CDS
         data_source = CDS(verbose=False)
@@ -111,7 +112,7 @@ def run_experiment(model_name: str, config_path: str) -> str:
         extract_vars += rh_vars + q_vars
         if tcw_present:
             extract_vars.append("tcwv")
-        tmp_ds = xr.open_dataset(fpath)
+        tmp_ds = io.root if io_type == "xarray" else xr.open_dataset(fpath)
 
         # add synthetic SP variable if requested
         if "ssp" in keep_vars_cp:
@@ -129,7 +130,6 @@ def run_experiment(model_name: str, config_path: str) -> str:
             exponent = g / (Rd * lapse_rate)
             ssp = p0 * (T2M / (T2M + lapse_rate * zs)) ** exponent
             tmp_ds["ssp"] = ssp
-
 
         if config["compute_sp_moist"]:
             print("Computing sp_moist variable.")
@@ -223,7 +223,7 @@ def run_experiment(model_name: str, config_path: str) -> str:
             tmp_ds = tmp_ds.drop_vars(keep_vars_cp)
 
         # overwrite temporary file
-        fpath.unlink()
+        fpath.unlink(missing_ok=True)
         tmp_ds.to_netcdf(fpath, mode="w")
 
     # combine all temporary files into one dataset, not using openmf because it's slow
@@ -234,7 +234,7 @@ def run_experiment(model_name: str, config_path: str) -> str:
     print(f"Combined dataset has dimensions: {ds.dims}")
 
     # add model dimension to enable opening with open_mfdataset
-    ds = ds.assign_coords(model=model_name)
+    ds = ds.assign_coords(model=model_name, lead_time=ds["lead_time"].values.astype(int)/3600) # convert timedelta of seconds to int of hours
 
     # for clarity
     ds = ds.rename({"time": "init_time"})
