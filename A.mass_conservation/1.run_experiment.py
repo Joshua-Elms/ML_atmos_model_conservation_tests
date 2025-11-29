@@ -235,7 +235,7 @@ def run_experiment(model_name: str, config_path: str) -> str:
 
     # add model dimension to enable opening with open_mfdataset
     ds = ds.assign_coords(
-        model=model_name, lead_time=ds["lead_time"].values.astype(int) / 3600
+        model=model_name, lead_time=ds["lead_time"].values.astype(int)
     )  # convert timedelta of seconds to int of hours
 
     # for clarity

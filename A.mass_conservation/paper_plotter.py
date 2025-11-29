@@ -27,7 +27,11 @@ display_var = (
 cmap_str = "brg"  # options here: matplotlib.org/stable/tutorials/colors/colormaps.html
 weird_color_const = 1  # unsure how this works, but it spaces out colors better when there are many models and inits
 day_interval_x_ticks = 15  # how many days between x-ticks on the plot
-standardized_ylims = None  # (975,986,) # y-limits for the plot, set to None to use the model output min/max, normally (1010, 1014)
+standardized_ylims = (
+    976,
+    983,
+)  # (975,986,) # y-limits for the plot, set to None to use the model output min/max, normally (1010, 1014)
+show_conservation_bounds = False
 conservation_half_range = 3  # hPa
 show_legend = True
 legend_ncols = 3
@@ -80,6 +84,12 @@ qual_colors = colormaps.get_cmap(cmap_str)(color_indices)
 qual_colors = np.array(colormaps.get_cmap("tab10").colors).reshape(-1, n_ics, 3)[
     :n_models, :
 ]
+# or overwrite qual_colors with a fixed set of colors:
+qual_colors = np.array([
+    ["xkcd:red brown", "xkcd:pale red"],
+    ["xkcd:dark sky blue", "xkcd:neon blue"],
+    ["xkcd:dark gold", "xkcd:marigold"],
+])
 linewidth = 2
 fontsize = 24
 smallsize = 20
@@ -96,30 +106,31 @@ initial_value = np.full_like(
     ds[f"MEAN_{plot_var}"].isel(lead_time=0).values.mean().round(1),
     dtype="float64",
 )
-ax.plot(
-    lead_times,
-    initial_value,
-    alpha=0.5,
-    color="black",
-    linewidth=1.5 * linewidth,
-    label=f"Initial global mean = {initial_value[0]} hPa",
-    linestyle=bound_linestyle,
-)
-ax.plot(
-    lead_times,
-    initial_value - conservation_half_range,
-    color="red",
-    linewidth=1.5 * linewidth,
-    linestyle=bound_linestyle,
-    label=f"+/- {conservation_half_range} hPa",
-)
-ax.plot(
-    lead_times,
-    initial_value + conservation_half_range,
-    color="red",
-    linewidth=1.5 * linewidth,
-    linestyle=bound_linestyle,
-)
+if show_conservation_bounds:
+    ax.plot(
+        lead_times,
+        initial_value,
+        alpha=0.5,
+        color="black",
+        linewidth=1.5 * linewidth,
+        label=f"Initial global mean = {initial_value[0]} hPa",
+        linestyle=bound_linestyle,
+    )
+    ax.plot(
+        lead_times,
+        initial_value - conservation_half_range,
+        color="red",
+        linewidth=1.5 * linewidth,
+        linestyle=bound_linestyle,
+        label=f"+/- {conservation_half_range} hPa",
+    )
+    ax.plot(
+        lead_times,
+        initial_value + conservation_half_range,
+        color="red",
+        linewidth=1.5 * linewidth,
+        linestyle=bound_linestyle,
+    )
 
 ### Loop through each model and plot the results ###
 for m, model in enumerate(models):
@@ -132,7 +143,6 @@ for m, model in enumerate(models):
     ### Plot the results ####################
 
     for i, ic in enumerate(ic_dates):
-        breakpoint()
         model_linedat = (
             ds[f"MEAN_{plot_var}"].sel(model=model).isel(init_time=i).squeeze()
         )
