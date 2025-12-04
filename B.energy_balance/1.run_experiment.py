@@ -272,20 +272,16 @@ def run_experiment(model_name: str, config_path: str) -> str:
             "total_energy",
         ]:
             if var != "total_energy":
-                tmp_ds[var] = (
+                if var == "latent_heat_energy" and moisture_var == "tcwv":
+                    tmp_ds[var] = (
+                        ("time", "lead_time", "lat", "lon"),
+                        latent_heat.values,
+                    )
+                else:
+                    tmp_ds[var] = (
                         ("time", "lead_time", "lat", "lon"),
                         integrate(energy_vars_dict[var]),
                     )
-                # if var == "latent_heat_energy" and moisture_var == "TCW":
-                #     tmp_ds[var] = (
-                #         ("time", "lead_time", "lat", "lon"),
-                #         latent_heat.values,
-                #     )
-                # else:
-                #     tmp_ds[var] = (
-                #         ("time", "lead_time", "lat", "lon"),
-                #         integrate(energy_vars_dict[var]),
-                #     )
             else:
                 tmp_ds["total_energy"] = (
                     tmp_ds["sensible_heat_energy"]
