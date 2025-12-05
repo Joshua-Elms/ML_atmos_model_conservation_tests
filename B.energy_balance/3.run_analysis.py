@@ -19,8 +19,8 @@ models = config["models"]
 
 # set up directories
 exp_dir = Path(config["experiment_dir"]) / config["experiment_name"]
-unperturbed_e3sm_path = Path(config["upert_e3sm_path"])
-perturbed_e3sm_path = Path(config["pert_e3sm_path"])
+unperturbed_processed_e3sm_path = exp_dir / "upert_processed_e3sm.nc"
+perturbed_processed_e3sm_path = exp_dir / "pert_processed_e3sm.nc"
 plot_dir = exp_dir / "plots"  # where to save plots
 if not plot_dir.exists():
     plot_dir.mkdir(parents=False, exist_ok=True)
@@ -39,9 +39,30 @@ model_ds = (
         concat_dim="model",
         preprocess=lambda x: general.sort_latitudes(x, "BLOOG", input=False),
     )
-    / 100
 )
 # open E3SM dataset
-upert_e3sm_ds = xr.open_dataset(unperturbed_e3sm_path)
-pert_e3sm_ds = xr.open_dataset(perturbed_e3sm_path)
+upert_e3sm_ds = xr.open_dataset(unperturbed_processed_e3sm_path)
+pert_e3sm_ds = xr.open_dataset(perturbed_processed_e3sm_path)
+
+# output table of TE and components at initial and final times
+energy_term_names = [
+    "sensible_heat",
+    "geopotential",
+    "kinetic",
+    "latent_heat",
+    "total",
+]
+pointwise_names = [f"{name}_energy" for name in energy_term_names]
+column_names = [f"{name}_energy_column" for name in energy_term_names]
+area_weighted_names = [f"AW_{name}_energy" for name in energy_term_names]
+
+fmt_numbers = lambda numbers: [f"{(num.item())/1e7:.4f}" for num in numbers]
+print(f"Area-weighted energy terms at initial and final times, 10^7 J/m^2:")
+for i, name in enumerate(area_weighted_names):
+    print(f"\n\t{name}:")
+    print(f"\t\tE3SM unperturbed (t={{0,-1}}): {fmt_numbers(upert_e3sm_ds[name].isel(lead_time=[0, -1]).squeeze().values)}")
+    print(f"\t\tE3SM perturbed (t={{0,-1}})  : {fmt_numbers(pert_e3sm_ds[name].isel(lead_time=[0, -1]).squeeze().values)}")
+    for model in models:
+        print(f"\t\t{model} (t={{0,-1}}){' ' * (16 - len(model))}: {fmt_numbers(model_ds[name].sel(model=model).isel(lead_time=[0, -1]).squeeze().values)}")
+
 breakpoint()

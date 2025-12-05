@@ -1,18 +1,24 @@
 experiment_dir: data/
-experiment_name: nt=12_nic=1_NO_GCO
+experiment_name: pert=0C_nt=56_nic=1_NO_GCO
 ic_dates: [
   '2020-01-01T00z',
   ]
 models: ["FuXi", "SFNO", "Pangu6x"]
-n_timesteps: 12
+n_timesteps: 56
 device: cuda:0
 debug_run: False
 overwrite: True # change to false!
 surface_geopotential_path: "/N/slate/jmelms/projects/ML_atmos_model_conservation_tests/A.mass_conservation/surface_geopotential.nc"
 keep_base_fields: False
-temp_perturbation_degC: 5
-upert_e3sm_path: "/N/slate/jmelms/projects/ML_atmos_model_conservation_tests/B.energy_balance/data/E3SM_runs/v2.1.WCYCLSSP370_20180201-20180401_12n32p_original_20251013/run/v2.1.WCYCLSSP370_20180201-20180401_12n32p_original_20251013.eam.h1.2018-02-01-00000.nc"
-pert_e3sm_path: "/N/slate/jmelms/projects/ML_atmos_model_conservation_tests/B.energy_balance/data/E3SM_runs/v2.1.WCYCLSSP370_20180201-20180401_12n32p_trial_05/run/v2.1.WCYCLSSP370_20180201-20180401_12n32p_trial_05.eam.h1.2018-02-01-00000.nc"
+temp_perturbation_degC: 0
+upert_e3sm_paths: [
+  "/N/slate/jmelms/projects/ML_atmos_model_conservation_tests/B.energy_balance/data/E3SM_runs/v2.1.WCYCLSSP370_20180201-20180401_12n32p_original_20251013/run/v2.1.WCYCLSSP370_20180201-20180401_12n32p_original_20251013.eam.h1.2018-02-01-00000.nc",
+  "/N/slate/jmelms/projects/ML_atmos_model_conservation_tests/B.energy_balance/data/E3SM_runs/v2.1.WCYCLSSP370_20180201-20180401_12n32p_original_20251013/run/v2.1.WCYCLSSP370_20180201-20180401_12n32p_original_20251013.eam.h1.2018-03-03-00000.nc"
+]
+pert_e3sm_paths: [
+  "/N/slate/jmelms/projects/ML_atmos_model_conservation_tests/B.energy_balance/data/E3SM_runs/v2.1.WCYCLSSP370_20180201-20180401_12n32p_trial_05/run/v2.1.WCYCLSSP370_20180201-20180401_12n32p_trial_05.eam.h1.2018-02-01-00000.nc",
+  "/N/slate/jmelms/projects/ML_atmos_model_conservation_tests/B.energy_balance/data/E3SM_runs/v2.1.WCYCLSSP370_20180201-20180401_12n32p_trial_05/run/v2.1.WCYCLSSP370_20180201-20180401_12n32p_trial_05.eam.h1.2018-03-03-00000.nc"
+  ]
 experiment_subdirectories: 
   - "plots"
  

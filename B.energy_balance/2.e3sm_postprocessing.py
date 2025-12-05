@@ -9,11 +9,16 @@ config_path = Path(__file__).parent / "0.config.yaml"
 config = general.read_config(config_path)
 
 # unperturbed and perturbed E3SM dataset paths
-upert_path = Path(config["upert_e3sm_path"])
-pert_path = Path(config["pert_e3sm_path"])
+upert_paths = [Path(upert_path) for upert_path in config["upert_e3sm_paths"]]
+pert_paths = [Path(pert_path) for pert_path in config["pert_e3sm_paths"]]
 
-upert_ds = xr.open_dataset(upert_path)
-pert_ds = xr.open_dataset(pert_path)
+upert_ds = xr.open_mfdataset(upert_paths, concat_dim="time", combine="nested")
+pert_ds = xr.open_mfdataset(pert_paths, concat_dim="time", combine="nested")
+
+# save paths for processed datasets
+exp_dir = Path(config["experiment_dir"]) / config["experiment_name"]
+unperturbed_processed_e3sm_path = exp_dir / "upert_processed_e3sm.nc"
+perturbed_processed_e3sm_path = exp_dir / "pert_processed_e3sm.nc"
 
 # Get column areas for latitude-weighting fields
 col_areas = upert_ds["area"]
@@ -30,7 +35,7 @@ g = 9.81  # m/s^2
 Lv = 2.26e6  # J/kg
 sb_const = 5.670374419e-8  # W/m^2/K^4, from https://physics.nist.gov/cgi-bin/cuu/Value?sigma
 
-for full_ds in [upert_ds, pert_ds]:
+for i, full_ds in enumerate([upert_ds, pert_ds]):
     # Subset relevant variables and rename to E2S standards
     vars_in_ds = (set(map(str.upper, model_info.MASTER_VARIABLES_NAMES)) & set(full_ds.data_vars)) | {"TMQ", "PS", "PHIS", "U050", "V050", "T050", "Z050", "Q050", "lat"}
     e3sm_to_cds = {var: var.lower() for var in vars_in_ds}
@@ -43,6 +48,11 @@ for full_ds in [upert_ds, pert_ds]:
     e3sm_to_cds["PHIS"] = "z" # surface geopotential
     e3sm_to_cds["TMQ"] = "tcwv" # total column water vapor
     flat_ds = full_ds[vars_in_ds].rename(e3sm_to_cds) # variables are on levels, e.g. z500 instead of z w/ dim "lev" including 500
+    
+    # change from single time coord to init_time (datetime) and lead_time (hours, int) coords
+    flat_ds = flat_ds.expand_dims({"init_time":[flat_ds.time.values[0]]}, axis=0)
+    lead_times = (flat_ds.time - flat_ds.init_time).astype("int").values.flatten() / 1e9 / 3600 # nanoseconds to hours
+    flat_ds = flat_ds.assign_coords(time=lead_times).rename({"time":"lead_time"})
     
     # preprocess the data to put T, U, V, Z, Q into blocks by level
     level_blocks = {}
@@ -62,29 +72,43 @@ for full_ds in [upert_ds, pert_ds]:
     # add 2D variables
     for var in ["sp", "z", "tcwv", "lat"]:
         ds[var] = flat_ds[var]
-    ds["normed_area"] = normed_col_areas
+    ds["normed_area"] = normed_col_areas.isel(time=0).drop("time") # constant field and doesn't need to drag time coordinate around
 
     ### Calculate total energy components ###
+    integrate = lambda da: (1 / g) * scipy.integrate.trapezoid(
+            da, model_levels_pa, axis=0
+        )
     # sensible heat
-    sensible_heat_energy = cp * ds["T"]
-    sensible_heat_energy_column = (1 / g) * scipy.integrate.trapezoid(sensible_heat_energy, model_levels_pa, axis=0)
+    ds["sensible_heat_energy"] = cp * ds["T"]
+    ds["sensible_heat_energy_column"] = (("init_time", "lead_time", "ncol"), integrate(ds["sensible_heat_energy"]))
+    ds["AW_sensible_heat_energy"] = (ds["sensible_heat_energy_column"] * ds["normed_area"]).sum(dim=["ncol"])
     
     # geopotential energy
-    geopotential_energy = g * ds["Z"] # E3SM provides geopotential height in meters, see full_ds["Z500"].mean().values ~ 5000 (m)
-    geopotential_energy_column = (1 / g) * scipy.integrate.trapezoid(geopotential_energy, model_levels_pa, axis=0)
+    ds["geopotential_energy"] = g * ds["Z"] # E3SM provides geopotential height in meters, see full_ds["Z500"].mean().values ~ 5000 (m)
+    ds["geopotential_energy_column"] = (("init_time", "lead_time", "ncol"), integrate(ds["geopotential_energy"]))
+    ds["AW_geopotential_energy"] = (ds["geopotential_energy_column"] * ds["normed_area"]).sum(dim=["ncol"])
     
     # kinetic energy
-    kinetic_energy = 0.5 * ds["U"] ** 2 + 0.5 * ds["V"] ** 2
-    kinetic_energy_column = (1 / g) * scipy.integrate.trapezoid(kinetic_energy, model_levels_pa, axis=0)
+    ds["kinetic_energy"] = 0.5 * ds["U"] ** 2 + 0.5 * ds["V"] ** 2
+    ds["kinetic_energy_column"] = (("init_time", "lead_time", "ncol"), integrate(ds["kinetic_energy"]))
+    ds["AW_kinetic_energy"] = (ds["kinetic_energy_column"] * ds["normed_area"]).sum(dim=["ncol"])
     
     # latent heat needs no integration, already column total
-    latent_heat_energy = Lv * ds["Q"] # use this for profile plots
-    latent_heat_energy_column = Lv * ds["tcwv"] # use this for total column energy
+    ds["latent_heat_energy"] = Lv * ds["Q"] # use this for profile plots
+    ds["latent_heat_energy_column"] = Lv * ds["tcwv"] # use this for total column energy
+    ds["AW_latent_heat_energy"] = (ds["latent_heat_energy_column"] * ds["normed_area"]).sum(dim=["ncol"])
     
     # total energy 
-    total_energy = sensible_heat_energy + geopotential_energy + kinetic_energy + latent_heat_energy
-    total_energy_column = sensible_heat_energy_column + geopotential_energy_column + kinetic_energy_column + latent_heat_energy_column
+    ds["total_energy"] = ds["sensible_heat_energy"] + ds["geopotential_energy"] + ds["kinetic_energy"] + ds["latent_heat_energy"]
+    ds["total_energy_column"] = ds["sensible_heat_energy_column"] + ds["geopotential_energy_column"] + ds["kinetic_energy_column"] + ds["latent_heat_energy_column"]
+    ds["AW_total_energy"] = (ds["total_energy_column"] * ds["normed_area"]).sum(dim=["ncol"])
     
-    breakpoint()
+    if i == 0:
+        # unperturbed
+        ds.to_netcdf(unperturbed_processed_e3sm_path, mode="w")
+    elif i == 1:
+        # perturbed
+        ds.to_netcdf(perturbed_processed_e3sm_path, mode="w")
+    print(f"Saved dataset {i+1}/2")
 
    

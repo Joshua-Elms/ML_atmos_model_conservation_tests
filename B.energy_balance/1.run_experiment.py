@@ -101,6 +101,7 @@ def run_experiment(model_name: str, config_path: str) -> str:
         # sort by latitude
         tmp_ds = general.sort_latitudes(tmp_ds, model_name, input=False)
 
+        # this exists because the inference code outputs the IC before the front hook (so no perturbation applied)
         if model_name not in ["FuXi", "FuXiShort", "GraphCastOperational"]:
             for var in pert_vars:
                 tmp_ds[var][dict(lead_time=0)] = (
@@ -110,44 +111,12 @@ def run_experiment(model_name: str, config_path: str) -> str:
         ### calculate energetics
         # preprocess the data to put T, U, V, Z, Q into blocks
         model_levels = model_info.STANDARD_13_LEVELS
+        ### Get pressure for integration ###
+        model_levels_pa = 100 * np.array(
+            model_levels
+        )  # convert to Pa from hPa, used for integration
         g = 9.81  # m/s^2
-        level_blocks = {}
 
-        for var in "tuvz":
-            levels = [level for level in model_levels if f"{var}{level}" in tmp_ds]
-            level_blocks[var.upper()] = [tmp_ds[f"{var}{level}"] for level in levels]
-            print(f"{len(levels)} {var} levels found: {levels}")
-
-        # # figure out whether to use tcwv, q, or r for moisture
-        # moisture_var = "tcw" if "tcwv" in model_vars else None
-        # # if tcwv, use that
-        # if moisture_var == "tcw":
-        #     level_blocks["TCW"] = [tmp_ds[moisture_var]]
-        # # otherwise, check for q or r
-        # else:
-        #     for var in model_vars:
-        #         if var.startswith("q") and int(var[1:]) in model_levels:
-        #             moisture_var = "q"
-        #             levels = [level for level in model_levels if f"q{level}" in tmp_ds]
-        #             level_blocks[var[0].upper()] = [
-        #                 tmp_ds[f"q{level}"] for level in levels
-        #             ]
-        #             print(f"{len(levels)} q levels found: {levels}")
-        #             break
-        #         elif var.startswith("r") and int(var[1:]) in model_levels:
-        #             moisture_var = "r"
-        #             levels = [level for level in model_levels if f"r{level}" in tmp_ds]
-        #             level_blocks[var[0].upper()] = [
-        #                 tmp_ds[f"r{level}"] for level in levels
-        #             ]
-        #             print(f"{len(levels)} r levels found: {levels}")
-        #             break
-        #     # if still none, raise error
-        #     else:
-        #         raise ValueError(
-        #             f"No suitable moisture variable found for energy calculation in model {model_name}."
-        #         )
-                
         rh_vars = [var for var in model_vars if "r" in var and var[1:].isdigit()]
         q_vars = [var for var in model_vars if "q" in var and var[1:].isdigit()]
         tcw_present = "tcwv" in model_vars
@@ -189,15 +158,23 @@ def run_experiment(model_name: str, config_path: str) -> str:
 
         if moisture_var == "q":
             print("Computing total column water (tcwv) from specific humidity (q).")
-            model_levels = model_info.STANDARD_13_LEVELS
-            levs_Pa = np.array(model_levels) * metpy.units.units("hPa")
             q_levels = [level for level in model_levels if f"q{level}" in tmp_ds]
             q_dat = [tmp_ds[f"q{level}"] for level in q_levels]
             Q = xr.concat(q_dat, dim="level").assign_coords(level=model_levels)
-            tcwv = (1 / g) * scipy.integrate.trapezoid(Q, levs_Pa, axis=0)
+            tcwv = (1 / g) * scipy.integrate.trapezoid(Q, model_levels_pa, axis=0)
             tmp_ds["tcwv"] = (Q.dims[1:], tcwv)
             moisture_var = "tcwv"
 
+        level_blocks = {}
+        for var in "tuvzq":
+            levels = [level for level in model_levels if f"{var}{level}" in tmp_ds]
+            if levels:
+                level_blocks[var.upper()] = [
+                    tmp_ds[f"{var}{level}"] for level in levels
+                ]
+            else:
+                print(f"Skipping {var} because no levels found.")
+            print(f"{len(levels)} {var} levels found: {levels}")
 
         # combine level blocks into single DataArrays
         for key in level_blocks:
@@ -210,89 +187,60 @@ def run_experiment(model_name: str, config_path: str) -> str:
                 level=model_levels
             )
 
+        # create new dataset from level blocks
+        ds_3d = xr.Dataset(level_blocks)
+        ds_3d["tcwv"] = tmp_ds["tcwv"]
+
         # Set constants
         cp = 1005.0  # J/kg/K
         Lv = 2.5e6  # J/kg
         sb_const = 5.670374419e-8  # W/m^2/K^4, from https://physics.nist.gov/cgi-bin/cuu/Value?sigma
 
-        ### Step 4b: Get pressure for integration ###
-        model_levels_pa = 100 * np.array(
-            model_levels
-        )  # convert to Pa from hPa, used for integration
-        model_levels_pa_w_units = model_levels_pa * metpy.units.units("Pa")
-
-        ### Step 4c: Calculate total energy components ###
-        # sensible heat
-        sensible_heat = cp * level_blocks["T"]
-        # geopotential energy
-        geopotential_energy = level_blocks[
-            "Z"
-        ]  # geopotential energy is already in J/kg, no need to multiply by g
-        # kinetic energy
-        kinetic_energy = 0.5 * level_blocks["U"] ** 2 + 0.5 * level_blocks["V"] ** 2
-        # latent heat
-        latent_heat = Lv * tmp_ds["tcwv"] 
-        # if moisture_var == "TCW":
-        #     latent_heat = Lv * level_blocks["TCW"]
-        # elif moisture_var in ["q", "r"]:
-        #     if moisture_var == "r":
-        #         for rh_var in rh_vars
-        #         print(
-        #             "Warning: Using 'r' for moisture content in latent heat calculation, converting to q"
-        #         )
-        #         breakpoint()
-        #         T = tmp_ds[t_var] * metpy.units.units("K")  # K
-        #         r = tmp_ds[rh_var] * metpy.units.units.percent  # %
-        #         # clip below 0. this will cause nan td, so we'll then replace those with 0 q.
-        #         r = r.clip(min=0.0 * metpy.units.units.percent)
-        #         td = metpy.calc.dewpoint_from_relative_humidity(T, r)
-        #         q = metpy.calc.specific_humidity_from_dewpoint(
-        #             p, td, phase="auto"
-        #         ).metpy.magnitude
-        #         q = np.nan_to_num(q, nan=0.0)
-        #         tmp_ds[f"q{level}"] = (tmp_ds[rh_var].dims, q)
-        #         level_blocks["Q"] = q
-        #     latent_heat = Lv * level_blocks["Q"]
-
-        ### Step 4d: Make dataset with each term as a variable
+        ### Calculate total energy components ###
         integrate = lambda da: (1 / g) * scipy.integrate.trapezoid(
             da, model_levels_pa, axis=0
         )
-        energy_vars_dict = {
-            "sensible_heat_energy": sensible_heat,
-            "geopotential_energy": geopotential_energy,
-            "kinetic_energy": kinetic_energy,
-            "latent_heat_energy": latent_heat,
-        }
-        for var in [
-            "sensible_heat_energy",
-            "geopotential_energy",
-            "kinetic_energy",
-            "latent_heat_energy",
-            "total_energy",
-        ]:
-            if var != "total_energy":
-                if var == "latent_heat_energy" and moisture_var == "tcwv":
-                    tmp_ds[var] = (
-                        ("time", "lead_time", "lat", "lon"),
-                        latent_heat.values,
-                    )
-                else:
-                    tmp_ds[var] = (
-                        ("time", "lead_time", "lat", "lon"),
-                        integrate(energy_vars_dict[var]),
-                    )
-            else:
-                tmp_ds["total_energy"] = (
-                    tmp_ds["sensible_heat_energy"]
-                    + tmp_ds["geopotential_energy"]
-                    + tmp_ds["kinetic_energy"]
-                    + tmp_ds["latent_heat_energy"]
-                )
-            tmp_ds[var].assign_attrs({"units": "J/m^2"})
-            tmp_ds[f"LW_{var}"] = general.latitude_weighted_mean(
-                tmp_ds[var], tmp_ds.lat
-            )
+        # sensible heat
+        ds_3d["sensible_heat_energy"] = cp * ds_3d["T"]
+        ds_3d["sensible_heat_energy_column"] = (("time", "lead_time", "lat", "lon"), integrate(ds_3d["sensible_heat_energy"]))
+        ds_3d["AW_sensible_heat_energy"] = general.latitude_weighted_mean(
+            ds_3d["sensible_heat_energy_column"], tmp_ds.lat
+        )
+        # geopotential energy -- already in J/kg, no need to multiply by g
+        ds_3d["geopotential_energy"] = ds_3d["Z"]
+        ds_3d["geopotential_energy_column"] = (("time", "lead_time", "lat", "lon"), integrate(ds_3d["geopotential_energy"]))
+        ds_3d["AW_geopotential_energy"] = general.latitude_weighted_mean(
+            ds_3d["geopotential_energy_column"], tmp_ds.lat
+        )
+        # kinetic energy
+        ds_3d["kinetic_energy"] = 0.5 * ds_3d["U"] ** 2 + 0.5 * ds_3d["V"] ** 2
+        ds_3d["kinetic_energy_column"] = (("time", "lead_time", "lat", "lon"), integrate(ds_3d["kinetic_energy"]))
+        ds_3d["AW_kinetic_energy"] = general.latitude_weighted_mean(
+            ds_3d["kinetic_energy_column"], tmp_ds.lat
+        )
+        # latent heat
+        ds_3d["latent_heat_energy"] = Lv * ds_3d["Q"]
+        ds_3d["latent_heat_energy_column"] = Lv * ds_3d["tcwv"]
+        ds_3d["AW_latent_heat_energy"] = general.latitude_weighted_mean(
+            ds_3d["latent_heat_energy_column"], tmp_ds.lat
+        )
+
+        # total energy
+        ds_3d["total_energy"] = (
+            ds_3d["sensible_heat_energy"]
+            + ds_3d["geopotential_energy"]
+            + ds_3d["kinetic_energy"]
+            + ds_3d["latent_heat_energy"]
+        )
+        ds_3d["total_energy_column"] = (
+            ds_3d["sensible_heat_energy_column"]
+            + ds_3d["geopotential_energy_column"]
+            + ds_3d["kinetic_energy_column"]
+            + ds_3d["latent_heat_energy_column"]
+        )
+        ds_3d["AW_total_energy"] = general.latitude_weighted_mean(
+            ds_3d["total_energy_column"], tmp_ds.lat
+        )
 
         # if storage is tight, drop the full 3D fields
         energy_varnames = [
@@ -301,18 +249,23 @@ def run_experiment(model_name: str, config_path: str) -> str:
             "kinetic_energy",
             "latent_heat_energy",
             "total_energy",
-            "LW_sensible_heat_energy",
-            "LW_geopotential_energy",
-            "LW_kinetic_energy",
-            "LW_latent_heat_energy",
-            "LW_total_energy",
+            "sensible_heat_energy_column",
+            "geopotential_energy_column",
+            "kinetic_energy_column",
+            "latent_heat_energy_column",
+            "total_energy_column",
+            "AW_sensible_heat_energy",
+            "AW_geopotential_energy",
+            "AW_kinetic_energy",
+            "AW_latent_heat_energy",
+            "AW_total_energy",
         ]
         if config.get("keep_base_fields", True) is False:
-            tmp_ds = tmp_ds[energy_varnames]
+            ds_3d = ds_3d[energy_varnames]
 
         # overwrite temporary file
         fpath.unlink()
-        tmp_ds.to_netcdf(fpath, mode="w")
+        ds_3d.to_netcdf(fpath, mode="w")
 
     # combine all temporary files into one dataset, not using openmf because it's slow
     ds_list = [xr.open_dataset(file) for file in tmp_output_files]
