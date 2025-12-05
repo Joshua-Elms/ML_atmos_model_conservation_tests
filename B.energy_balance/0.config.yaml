@@ -11,6 +11,8 @@ overwrite: True # change to false!
 surface_geopotential_path: "/N/slate/jmelms/projects/ML_atmos_model_conservation_tests/A.mass_conservation/surface_geopotential.nc"
 keep_base_fields: False
 temp_perturbation_degC: 5
+upert_e3sm_path: "/N/slate/jmelms/projects/ML_atmos_model_conservation_tests/B.energy_balance/data/E3SM_runs/v2.1.WCYCLSSP370_20180201-20180401_12n32p_original_20251013/run/v2.1.WCYCLSSP370_20180201-20180401_12n32p_original_20251013.eam.h1.2018-02-01-00000.nc"
+pert_e3sm_path: "/N/slate/jmelms/projects/ML_atmos_model_conservation_tests/B.energy_balance/data/E3SM_runs/v2.1.WCYCLSSP370_20180201-20180401_12n32p_trial_05/run/v2.1.WCYCLSSP370_20180201-20180401_12n32p_trial_05.eam.h1.2018-02-01-00000.nc"
 experiment_subdirectories: 
   - "plots"
  
