@@ -1,10 +1,10 @@
 experiment_dir: data/
-experiment_name: pert=0C_nt=56_nic=1_NO_GCO
+experiment_name: pert=0C_nt=236_nic=1_NO_GCO
 ic_dates: [
   '2020-01-01T00z',
   ]
-models: ["FuXi", "SFNO", "Pangu6x"]
-n_timesteps: 56
+models: ["FuXi", "FuXiSmall", "SFNO", "FCN3", "Pangu24", "Pangu6x"]
+n_timesteps: 236
 device: cuda:0
 debug_run: False
 overwrite: True # change to false!
