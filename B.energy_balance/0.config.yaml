@@ -21,4 +21,3 @@ pert_e3sm_paths: [
   ]
 experiment_subdirectories: 
   - "plots"
- 

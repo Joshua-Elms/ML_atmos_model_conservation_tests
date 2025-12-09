@@ -159,3 +159,11 @@ for i, full_ds in enumerate([upert_ds, pert_ds]):
         # perturbed
         ds.to_netcdf(perturbed_processed_e3sm_path, mode="w")
     print(f"Saved dataset {i+1}/2")
+
+# also output the difference at t=0 of these two files for perturbation verification
+difference_path = Path("/N/slate/jmelms/projects/ML_atmos_model_conservation_tests/B.energy_balance/data/E3SM_runs/difference/perturbed_minus_original.nc")
+diff_ds = pert_ds[vars_in_ds].isel(time=0) - upert_ds[vars_in_ds].isel(time=0)
+other_vars = set(upert_ds.data_vars) - set(vars_in_ds)
+diff_ds = diff_ds.merge(upert_ds[other_vars].isel(time=0))
+diff_ds.to_netcdf(difference_path, mode="w")
+print(f"Saved initial condition difference dataset to {difference_path}")

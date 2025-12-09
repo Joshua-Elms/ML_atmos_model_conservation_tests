@@ -84,3 +84,6 @@ for i, name in enumerate(energy_term_names):
     plt.tight_layout()
     fig.savefig(plot_dir / f"unperturbed_{name}_energy_trends.png")
     print(f"Saved unperturbed {name} energy trend plot.")
+    
+# Plot 2: E3SM initial condition comparison
+breakpoint()
