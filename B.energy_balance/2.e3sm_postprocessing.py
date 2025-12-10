@@ -45,7 +45,7 @@ for i, full_ds in enumerate([upert_ds, pert_ds]):
     # Subset relevant variables and rename to E2S standards
     vars_in_ds = (
         set(map(str.upper, model_info.MASTER_VARIABLES_NAMES)) & set(full_ds.data_vars)
-    ) | {"TMQ", "PS", "PHIS", "U050", "V050", "T050", "Z050", "Q050", "lat"}
+    ) | {"TMQ", "PS", "PHIS", "U050", "V050", "T050", "Z050", "Q050"}
     e3sm_to_cds = {var: var.lower() for var in vars_in_ds}
     e3sm_to_cds["U050"] = "u50"  # 50 hPa zonal wind
     e3sm_to_cds["V050"] = "v50"  # 50 hPa meridional wind
@@ -86,7 +86,7 @@ for i, full_ds in enumerate([upert_ds, pert_ds]):
     ds = xr.Dataset(level_blocks)
 
     # add 2D variables
-    for var in ["sp", "z", "tcwv", "lat"]:
+    for var in ["sp", "z", "tcwv"]:
         ds[var] = flat_ds[var]
     ds["normed_area"] = normed_col_areas
 
@@ -162,8 +162,9 @@ for i, full_ds in enumerate([upert_ds, pert_ds]):
 
 # also output the difference at t=0 of these two files for perturbation verification
 difference_path = Path("/N/slate/jmelms/projects/ML_atmos_model_conservation_tests/B.energy_balance/data/E3SM_runs/difference/perturbed_minus_original.nc")
-diff_ds = pert_ds[vars_in_ds].isel(time=0) - upert_ds[vars_in_ds].isel(time=0)
-other_vars = set(upert_ds.data_vars) - set(vars_in_ds)
-diff_ds = diff_ds.merge(upert_ds[other_vars].isel(time=0))
+diffs = pert_ds[vars_in_ds].isel(time=0) - upert_ds[vars_in_ds].isel(time=0)
+diff_ds = upert_ds.isel(time=0).copy()
+for var in diffs.data_vars:
+    diff_ds[var] = diffs[var]
 diff_ds.to_netcdf(difference_path, mode="w")
 print(f"Saved initial condition difference dataset to {difference_path}")

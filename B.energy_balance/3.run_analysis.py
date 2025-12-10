@@ -85,5 +85,40 @@ for i, name in enumerate(energy_term_names):
     fig.savefig(plot_dir / f"unperturbed_{name}_energy_trends.png")
     print(f"Saved unperturbed {name} energy trend plot.")
     
-# Plot 2: E3SM initial condition comparison
-breakpoint()
+for model in models:
+    times = np.arange(0, 50)
+    titles = [f"{model}: Column TE init {ic_dates[0].strftime('%d-%m-%Y %Hz')} @ {d} days lead time" for d in all_lead_times_d[times]]
+    data = model_ds[f"total_energy_column"].sel(model=model).isel(lead_time=times).squeeze()  # select final init time
+    gif_plot_var = f"{name}_{model}"
+    vis.create_and_plot_variable_gif(
+        data=data,
+        plot_var=gif_plot_var,
+        iter_var="lead_time",
+        iter_vals=np.arange(0, 20),
+        plot_dir=plot_dir,
+        units="J/m^2",
+        cmap="PRGn",
+        titles=titles,
+        keep_images=False,
+        dpi=300,
+        fps=1,
+        fig_size=(8, 4),
+        vlims=(2.7e9, 3.4e9),  # Set vlims for better visualization
+        central_longitude=180.0,
+        adjust = {
+        "top": 0.93,
+        "bottom": 0.03,
+        "left": 0.09,
+        "right": 0.87,
+        "hspace": 0.0,
+        "wspace": 0.0,
+        },
+        cbar_kwargs={
+            "rotation": "horizontal",
+            "y": -0.015,
+            "horizontalalignment": "right",
+            "labelpad": -29,
+            "fontsize": 9
+        },
+    )
+    print(f"Made {gif_plot_var}.gif.")
