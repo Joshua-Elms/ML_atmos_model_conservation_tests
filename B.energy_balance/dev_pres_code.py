@@ -166,7 +166,6 @@ def surface_aware_integrate(da, z, zs, surface_field=None):
 
     # iteratively go to (lower height, higher pressure) levels and set pressure values to surface pressure at each to make zero thickness layers
     for i in range(level_idxs.size - j0_idxs.min().astype(int)):
-        breakpoint()
         higher_j0_idxs = j0_idxs.copy()
         higher_level_exists_mask = higher_j0_idxs < (level_idxs.size - 1)
         print(
@@ -178,7 +177,7 @@ def surface_aware_integrate(da, z, zs, surface_field=None):
         j0_idxs = higher_j0_idxs
 
     # finally, integrate
-    integrated = (1 / g) * scipy.integrate.simpson(
+    integrated = scipy.integrate.simpson(
         extended_da_np, full_levels_pa, axis=0
     )
 

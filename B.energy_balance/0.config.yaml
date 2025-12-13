@@ -1,5 +1,5 @@
 experiment_dir: data/
-experiment_name: pert=0C_nt=4_nic=1_NO_GCO
+experiment_name: pert=0C_nt=4_nic=1_NO_GCO_sai
 ic_dates: [
   '2020-01-01T00z',
   ]
