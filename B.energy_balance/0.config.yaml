@@ -1,16 +1,16 @@
-experiment_dir: /N/scratch/jmelms/ML_atmos_model_conservation_tests_scratch_data/B.energy_balance/data/
-experiment_name: pert=5C_nt=236_nic=1_NO_GCO
+experiment_dir: data/
+experiment_name: pert=0C_nt=4_nic=1_NO_GCO
 ic_dates: [
   '2020-01-01T00z',
   ]
-models: ["FuXi", "FuXiShort", "SFNO", "FCN3", "Pangu24", "Pangu6x"]
-n_timesteps: 236
+models: ["Pangu6x"]
+n_timesteps: 4
 device: cuda:0
 debug_run: False
 overwrite: True # change to false!
 surface_geopotential_path: "/N/slate/jmelms/projects/ML_atmos_model_conservation_tests/A.mass_conservation/surface_geopotential.nc"
-keep_base_fields: False
-temp_perturbation_degC: 5
+keep_base_fields: True
+temp_perturbation_degC: 0
 upert_e3sm_paths: [
   "/N/slate/jmelms/projects/ML_atmos_model_conservation_tests/B.energy_balance/data/E3SM_runs/v2.1.WCYCLSSP370_20180201-20180401_12n32p_original_20251013/run/v2.1.WCYCLSSP370_20180201-20180401_12n32p_original_20251013.eam.h1.2018-02-01-00000.nc",
   "/N/slate/jmelms/projects/ML_atmos_model_conservation_tests/B.energy_balance/data/E3SM_runs/v2.1.WCYCLSSP370_20180201-20180401_12n32p_original_20251013/run/v2.1.WCYCLSSP370_20180201-20180401_12n32p_original_20251013.eam.h1.2018-03-03-00000.nc"
