@@ -48,7 +48,7 @@ def run_experiment(model_name: str, config_path: str) -> str:
     
     # load surface geopotential height data if needed
     zs_path = Path(config["surface_geopotential_path"])
-    zs = xr.open_dataset(zs_path)
+    zs = xr.open_dataset(zs_path)["geopotential"]
 
     # set indices of variables to perturb
     all_temp_vars = ["t2m"] + [f"t{level}" for level in model_info.STANDARD_13_LEVELS]

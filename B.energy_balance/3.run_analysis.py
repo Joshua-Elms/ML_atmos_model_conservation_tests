@@ -86,7 +86,7 @@ for i, name in enumerate(energy_term_names):
     print(f"Saved unperturbed {name} energy trend plot.")
     
 for model in models:
-    times = np.arange(0, 50)
+    times = np.arange(0, n_timesteps + 1)
     titles = [f"{model}: Column TE init {ic_dates[0].strftime('%d-%m-%Y %Hz')} @ {d} days lead time" for d in all_lead_times_d[times]]
     data = model_ds[f"total_energy_column"].sel(model=model).isel(lead_time=times).squeeze()  # select final init time
     gif_plot_var = f"{name}_{model}"
@@ -94,7 +94,7 @@ for model in models:
         data=data,
         plot_var=gif_plot_var,
         iter_var="lead_time",
-        iter_vals=np.arange(0, 20),
+        iter_vals=times,
         plot_dir=plot_dir,
         units="J/m^2",
         cmap="PRGn",
