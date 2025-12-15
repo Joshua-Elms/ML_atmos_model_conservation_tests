@@ -1,10 +1,10 @@
-experiment_dir: data/
-experiment_name: pert=0C_nt=12_nic=1_NO_GCO_sai
+experiment_dir: /N/scratch/jmelms/ML_atmos_model_conservation_tests_scratch_data/B.energy_balance/data
+experiment_name: pert=0C_nt=236_nic=1_NO_GCO_sai
 ic_dates: [
   '2018-02-01T00z',
   ]
-models: ["Pangu6x", "Pangu24", "SFNO", "FuXi", "FuXiShort", "FCN3"]
-n_timesteps: 8
+models: ["FuXi", "FuXiShort", "FCN3", "Pangu6x", "Pangu24", "SFNO"]
+n_timesteps: 236
 device: cuda:0
 debug_run: False
 overwrite: True # change to false!

@@ -728,11 +728,11 @@ def surface_aware_integrate(da, z, zs, model_levels_pa, surface_field=None):
 
     # make all necessary arrays to be partially populated by both interpolation and extrapolation methods
     single_level_shape = z.isel(level=0).data.shape
-    j0_idxs = np.full(
-        single_level_shape, np.nan
+    j0_idxs = np.full(single_level_shape, np.nan).astype(
+        int
     )  # lower bounding layer index (interp) or original lowest model level (extrap)
-    j1_idxs = np.full(
-        single_level_shape, np.nan
+    j1_idxs = np.full(single_level_shape, np.nan).astype(
+        int
     )  # upper bounding layer index (interp) or original 2nd lowest model level (extrap)
     dpdz = np.full(
         single_level_shape, np.nan
@@ -745,13 +745,13 @@ def surface_aware_integrate(da, z, zs, model_levels_pa, surface_field=None):
     # extrapolation
     j0_idxs[extrapolate_mask] = level_idxs[-2]  # original lowest model level
     j1_idxs[extrapolate_mask] = level_idxs[-3]  # original 2nd lowest model level
+
     # interpolation
     diff = z.data - zs.data
     nearest_level = np.argmin(np.abs(diff), axis=0)
-    min_abs_diff = np.min(np.abs(diff), axis=0)
-    pos_diff_mask = min_abs_diff > 0
-    neg_diff_mask = min_abs_diff <= 0
-    eq_diff_mask = min_abs_diff == 0
+    min_diff = np.take_along_axis(diff, nearest_level[None, ...], axis=0)[0]
+    pos_diff_mask = min_diff > 0
+    neg_diff_mask = min_diff <= 0
     # nearest level above surface
     j0_idxs[interpolate_mask & pos_diff_mask] = (
         nearest_level[interpolate_mask & pos_diff_mask] + 1
@@ -770,24 +770,31 @@ def surface_aware_integrate(da, z, zs, model_levels_pa, surface_field=None):
     j0 = j0_idxs == full_level_idxs
     j1 = j1_idxs == full_level_idxs
 
+    take_along_j0 = lambda arr: np.take_along_axis(arr, j0_idxs[None, ...], axis=0)[0]
+    take_along_j1 = lambda arr: np.take_along_axis(arr, j1_idxs[None, ...], axis=0)[0]
+
     # whether interp or extrap, following works:
-    dpdz = (
-        (full_levels_pa[j1] - full_levels_pa[j0])
-        / (extended_z_np[j1] - extended_z_np[j0])
-    ).reshape(single_level_shape)
-    ps = extended_z_np[j0].reshape(single_level_shape) + (
-        dpdz * (zs.data - extended_z_np[j0].reshape(single_level_shape))
+    # dpdz = (
+    #     (full_levels_pa[j1] - full_levels_pa[j0])
+    #     / (extended_z_np[j1] - extended_z_np[j0])
+    # ).reshape(single_level_shape)
+    dpdz = (take_along_j1(full_levels_pa) - take_along_j0(full_levels_pa)) / (
+        take_along_j1(extended_z_np) - take_along_j0(extended_z_np)
     )
+    # ps = extended_z_np[j0].reshape(single_level_shape) + (
+    #     dpdz * (zs.data - extended_z_np[j0].reshape(single_level_shape))
+    # )
+    ps = take_along_j0(full_levels_pa) + (dpdz * (zs.data - take_along_j0(extended_z_np)))
     if surface_field is not None:  # model returns surface field, like t2m or u10m
         fs = surface_field.data
     else:  # model does not return surface field, -polate
-        da_0 = extended_da_np[j0].reshape(single_level_shape)
-        da_1 = extended_da_np[j1].reshape(single_level_shape)
+        da_0 = take_along_j0(extended_da_np)
+        da_1 = take_along_j1(extended_da_np)
         dfdz = (da_1 - da_0) / (
-            extended_z_np[j1].reshape(single_level_shape)
-            - extended_z_np[j0].reshape(single_level_shape)
+            take_along_j1(extended_z_np)
+            - take_along_j0(extended_z_np)
         )
-        fs = da_0 + (dfdz * (zs.data - extended_z_np[j0].reshape(single_level_shape)))
+        fs = da_0 + (dfdz * (zs.data - take_along_j0(extended_z_np)))
 
     # finishing extrapolation case
     full_levels_pa[-1][extrapolate_mask] = ps[
@@ -816,9 +823,7 @@ def surface_aware_integrate(da, z, zs, model_levels_pa, surface_field=None):
         j0_idxs = higher_j0_idxs
 
     # finally, integrate
-    integrated = scipy.integrate.simpson(
-        extended_da_np, full_levels_pa, axis=0
-    )
+    integrated = scipy.integrate.simpson(extended_da_np, full_levels_pa, axis=0)
 
     return integrated
 
@@ -869,4 +874,3 @@ if __name__ == "__main__":
     )
     lw_mean = latitude_weighted_mean(da, latitudes=lat)
     print(f"Test 3: mean should be 7.5, got {lw_mean.values}")
-
