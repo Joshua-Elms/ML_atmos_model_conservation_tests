@@ -60,6 +60,22 @@ energy_term_names = [
 pointwise_names = [f"{name}_energy" for name in energy_term_names]
 column_names = [f"{name}_energy_column" for name in energy_term_names]
 area_weighted_names = [f"AW_{name}_energy" for name in energy_term_names]
+if perturbed:
+    energy_ylims = {
+        "sensible_heat": (246.5, 254.5),
+        "latent_heat": (5.2, 8.5),
+        "geopotential": (60.5, 63.5),
+        "kinetic": (0.1, 0.2),
+        "total": (313, 324),
+    }
+else:
+    energy_ylims = {
+        "sensible_heat": (244, 250),
+        "latent_heat": (4.6, 6.25),
+        "geopotential": (60, 62.5),
+        "kinetic": (0.08, 0.2),
+        "total": (310, 318),
+    }
 
 fmt_numbers = lambda numbers: [f"{(num.item())/1e7:.4f}" for num in numbers]
 
@@ -81,11 +97,19 @@ for i, name in enumerate(energy_term_names):
     fig, ax = plt.subplots(figsize=(10, 6))
     ax.plot(
         all_lead_times_h,
-        upert_e3sm_ds[f"AW_{name}_energy"] if not perturbed else pert_e3sm_ds[f"AW_{name}_energy"]
-        .sel(lead_time=all_lead_times_h)
-        .squeeze()
-        .values
-        / 1e7,
+        (
+            upert_e3sm_ds[f"AW_{name}_energy"]
+            .sel(lead_time=all_lead_times_h)
+            .squeeze()
+            .values
+            / 1e7
+            if not perturbed
+            else pert_e3sm_ds[f"AW_{name}_energy"]
+            .sel(lead_time=all_lead_times_h)
+            .squeeze()
+            .values
+            / 1e7
+        ),
         label=f"E3SM {'perturbed' if perturbed else 'unperturbed'}",
     )
     for model in models:
@@ -111,11 +135,13 @@ for i, name in enumerate(energy_term_names):
                 / 1e7,
                 label=model,
             )
-
-    ax.set_title(f"Area-weighted {name} Energy (unperturbed)")
+    ax.set_title(
+        f"Area-weighted {name} Energy ({'Perturbed' if perturbed else 'Unperturbed'})"
+    )
     ax.set_xlabel("Lead Time (days)")
     ax.set_xticks(all_lead_times_h[:: 4 * 7], all_lead_times_d[:: 4 * 7].round(0))
     ax.set_ylabel(f"Global Column Mean {name} Energy (10^7 J/m^2)")
+    ax.set_ylim(energy_ylims[name])
     ax.legend()
     plt.tight_layout()
     fig.savefig(plot_dir / f"unperturbed_{name}_energy_trends.png")

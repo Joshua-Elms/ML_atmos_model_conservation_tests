@@ -10,7 +10,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --gpus-per-node h100:1
-#SBATCH --time=10:00:00
+#SBATCH --time=2:00:00
 #SBATCH --mem=500GB
 #SBATCH -A r00389
 
