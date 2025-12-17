@@ -45,7 +45,7 @@ def run_experiment(model_name: str, config_path: str) -> str:
         / f"{model_name}_output_{ic_date.strftime('%Y%m%dT%H')}_tmp_{np.random.randint(10000)}.nc"
         for ic_date in ic_dates
     ]
-    
+
     # load surface geopotential height data if needed
     zs_path = Path(config["surface_geopotential_path"])
     zs = xr.open_dataset(zs_path)["geopotential"]
@@ -106,7 +106,13 @@ def run_experiment(model_name: str, config_path: str) -> str:
         tmp_ds = general.sort_latitudes(tmp_ds, model_name, input=False)
 
         # this exists because the inference code outputs the IC before the front hook (so no perturbation applied)
-        if model_name not in ["FuXi", "FuXiShort", "GraphCastOperational"]:
+        if model_name not in [
+            "FuXi",
+            "FuXiShort",
+            "FuXiMedium",
+            "FuXiLong",
+            "GraphCastOperational",
+        ]:
             for var in pert_vars:
                 tmp_ds[var][dict(lead_time=0)] = (
                     tmp_ds[var].isel(lead_time=0) + config["temp_perturbation_degC"]
@@ -120,16 +126,14 @@ def run_experiment(model_name: str, config_path: str) -> str:
             model_levels
         )  # convert to Pa from hPa, used for integration
         g = 9.81  # m/s^2
-        
+
         # need to add, model_levels_pa Z field so that I can integrate w/r/t surface
         Z_block = {}
         print("Collecting geopotential height (Z) field for energy calculations.")
         for var in "z":
             levels = [level for level in model_levels if f"{var}{level}" in tmp_ds]
             if levels:
-                Z_block[var.upper()] = [
-                    tmp_ds[f"{var}{level}"] for level in levels
-                ]
+                Z_block[var.upper()] = [tmp_ds[f"{var}{level}"] for level in levels]
             else:
                 print(f"Skipping {var} because no levels found.")
             print(f"{len(levels)} {var} levels found: {levels}")
@@ -189,7 +193,9 @@ def run_experiment(model_name: str, config_path: str) -> str:
             q_dat = [tmp_ds[f"q{level}"] for level in q_levels]
             Q = xr.concat(q_dat, dim="level").assign_coords(level=model_levels)
             print(general.surface_aware_integrate.__doc__)
-            tcwv = (1 / g) * general.surface_aware_integrate(Q, Z/g, zs/g, model_levels_pa)
+            tcwv = (1 / g) * general.surface_aware_integrate(
+                Q, Z / g, zs / g, model_levels_pa
+            )
             tmp_ds["tcwv"] = (Q.dims[1:], tcwv)
             moisture_var = "tcwv"
 
@@ -222,25 +228,38 @@ def run_experiment(model_name: str, config_path: str) -> str:
         # Set constants
         cp = 1005.0  # J/kg/K
         Lv = 2.5e6  # J/kg
-        sb_const = 5.670374419e-8  # W/m^2/K^4, from https://physics.nist.gov/cgi-bin/cuu/Value?sigma
 
         ### Calculate total energy components ###
-        integrate = lambda da: (1 / g) * scipy.integrate.trapezoid(
-            da, model_levels_pa, axis=0
-        )
+
         # sensible heat
         ds_3d["sensible_heat_energy"] = cp * ds_3d["T"]
         if "t2m" in model_vars:
             sfc_sensible_heat = cp * tmp_ds["t2m"]
         else:
             sfc_sensible_heat = None
-        ds_3d["sensible_heat_energy_column"] = (("time", "lead_time", "lat", "lon"), (1/g)*general.surface_aware_integrate(ds_3d["sensible_heat_energy"], ds_3d["Z"]/g, zs/g, model_levels_pa, sfc_sensible_heat))
+        ds_3d["sensible_heat_energy_column"] = (
+            ("time", "lead_time", "lat", "lon"),
+            (1 / g)
+            * general.surface_aware_integrate(
+                ds_3d["sensible_heat_energy"],
+                ds_3d["Z"] / g,
+                zs / g,
+                model_levels_pa,
+                sfc_sensible_heat,
+            ),
+        )
         ds_3d["AW_sensible_heat_energy"] = general.latitude_weighted_mean(
             ds_3d["sensible_heat_energy_column"], tmp_ds.lat
         )
         # geopotential energy -- already in J/kg, no need to multiply by g
         ds_3d["geopotential_energy"] = ds_3d["Z"]
-        ds_3d["geopotential_energy_column"] = (("time", "lead_time", "lat", "lon"), (1/g)*general.surface_aware_integrate(ds_3d["geopotential_energy"], ds_3d["Z"]/g, zs/g, model_levels_pa))
+        ds_3d["geopotential_energy_column"] = (
+            ("time", "lead_time", "lat", "lon"),
+            (1 / g)
+            * general.surface_aware_integrate(
+                ds_3d["geopotential_energy"], ds_3d["Z"] / g, zs / g, model_levels_pa
+            ),
+        )
         ds_3d["AW_geopotential_energy"] = general.latitude_weighted_mean(
             ds_3d["geopotential_energy_column"], tmp_ds.lat
         )
@@ -250,7 +269,17 @@ def run_experiment(model_name: str, config_path: str) -> str:
             sfc_kinetic_energy = 0.5 * tmp_ds["u10m"] ** 2 + 0.5 * tmp_ds["v10m"] ** 2
         else:
             sfc_kinetic_energy = None
-        ds_3d["kinetic_energy_column"] = (("time", "lead_time", "lat", "lon"), (1/g)*general.surface_aware_integrate(ds_3d["kinetic_energy"], ds_3d["Z"]/g, zs/g, model_levels_pa, sfc_kinetic_energy))
+        ds_3d["kinetic_energy_column"] = (
+            ("time", "lead_time", "lat", "lon"),
+            (1 / g)
+            * general.surface_aware_integrate(
+                ds_3d["kinetic_energy"],
+                ds_3d["Z"] / g,
+                zs / g,
+                model_levels_pa,
+                sfc_kinetic_energy,
+            ),
+        )
         ds_3d["AW_kinetic_energy"] = general.latitude_weighted_mean(
             ds_3d["kinetic_energy_column"], tmp_ds.lat
         )
@@ -311,7 +340,7 @@ def run_experiment(model_name: str, config_path: str) -> str:
     print(f"Combined dataset has dimensions: {ds.dims}")
 
     # add model dimension to enable opening with open_mfdataset
-    ds = ds.assign_coords(model=model_name)
+    ds = ds.assign_coords(model=model_name, lead_time=ds.lead_time / np.timedelta64(1, "h")) # convert lead_time to hours
 
     # for clarity
     ds = ds.rename({"time": "init_time"})
