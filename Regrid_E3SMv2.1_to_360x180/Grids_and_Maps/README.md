@@ -1,0 +1,1 @@
+Grids live here: https://web.lcrc.anl.gov/public/e3sm/diagnostics/grids/
