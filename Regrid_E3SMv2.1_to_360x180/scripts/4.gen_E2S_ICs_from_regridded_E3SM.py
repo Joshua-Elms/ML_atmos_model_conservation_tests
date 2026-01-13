@@ -61,6 +61,7 @@ for lev in model_info.STANDARD_13_LEVELS:
         Td = metpy.calc.dewpoint_from_specific_humidity(
             pressure=p, specific_humidity=q
         ).metpy.convert_units("K")
+        breakpoint()
         Td = np.where(Td > T, T, Td) * metpy.units.units("K")
         breakpoint()
         r = metpy.calc.relative_humidity_from_dewpoint(
