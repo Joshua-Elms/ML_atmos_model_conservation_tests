@@ -4,17 +4,17 @@ from pathlib import Path
 
 res = 0.25
 lat_start = 90
-lon_start = 0
 lat_stop = -90
+lon_start = 0
 lon_stop = 360
 
 print("Making lat/lon centers from given resolution and extents:")
 lats = np.arange(lat_start, lat_stop - res, -res)
-lons = np.arange(lon_start + res / 2, lon_stop + res / 2, res)
+lons = np.arange(lon_start, lon_stop, res)
 nlat = len(lats)
 nlon = len(lons)
-m_lat = lats.repeat(nlon) # lats look like 90, 90, 90, ..., -90, -90, -90
-m_lon = np.tile(lons, nlat) # lons look like 0, 0.25, ..., 359.75, 360, 0, 0.25, ...
+m_lat = lats.repeat(nlon)  # lats look like 90, 90, 90, ..., -90, -90, -90
+m_lon = np.tile(lons, nlat)  # lons look like 0, 0.25, ..., 359.75, 360, 0, 0.25, ...
 print("Lat/Lons derived from res and extents:")
 print(m_lat)
 print(m_lon)
@@ -31,6 +31,9 @@ lr_lon_est = m_lon + res / 2
 
 # order of corners is [ll, lr, ur, ul]
 lat_corners = np.array([ll_lat_est, lr_lat_est, ur_lat_est, ul_lat_est]).T
+lat_corners = np.clip(
+    lat_corners, min=-90, max=90
+)  # handles ERA5 grid oddity, giving polar grid boxes half-sized lat bounds
 lon_corners = np.array([ll_lon_est, lr_lon_est, ur_lon_est, ul_lon_est]).T
 
 print("Latitude corners:")

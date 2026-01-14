@@ -14,6 +14,12 @@ module load nco
 # Path to the mapfile
 mapfile="/N/slate/jmelms/projects/ML_atmos_model_conservation_tests/Regrid_E3SMv2.1_to_360x180/Grids_and_Maps/map_ne30pg2_to_era5_721x1440.20260108.nc"
 
+# if mapfile not exist, generate it
+if [ ! -f $mapfile ]; then
+    echo "File not found!"
+    ncremap -s ../Grids_and_Maps/ne30pg2.nc -g ../Grids_and_Maps/era5_721x1440.nc -m $mapfile
+fi
+
 ### Unperturbed
 # Define the input and output directories #
 input_dir="/N/scratch/jmelms/ML_atmos_model_conservation_tests_scratch_data/B.energy_balance/data/original_native_grid"
