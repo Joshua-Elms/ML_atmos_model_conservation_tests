@@ -4,6 +4,7 @@ and we only need the initial condition, we isolate the initial timestep and writ
 """
 
 import xarray as xr
+import numpy as np
 from pathlib import Path
 
 
@@ -16,9 +17,9 @@ output_path = Path(
 )
 
 # set fill values for all vars
-ds = xr.open_dataset(input_path)
-coords = list(ds.coords)
-coord_fill_values = {coord: {"_FillValue": None} for coord in coords if coord != "time"}
+ds = xr.open_dataset(input_path).isel(time=0)
+coords = list(ds.drop_vars("time").coords)
+coord_fill_values = {coord: {"_FillValue": None} for coord in coords}
 data_vars = list(ds.data_vars)
 data_var_fill_values = {
     data_var: {"_FillValue": -999_999_999} for data_var in data_vars
@@ -29,12 +30,12 @@ encodings = {
 }
 
 # subset to first timestep and write to output file
-xr.open_dataset(input_path).isel(time=0).drop_vars("time").to_netcdf(
-    output_path, encoding=encodings
-)
+time = ds["time"].item().isoformat()
+ds = ds.drop_vars("time")
+ds = ds.assign_attrs({"ic_date": time})
+ds.to_netcdf(output_path, encoding=encodings)
 
 print(f"Saving initial timestep from {input_path.name}")
-
 
 # perturbed
 input_path = Path(
@@ -44,9 +45,23 @@ output_path = Path(
     "/N/scratch/jmelms/ML_atmos_model_conservation_tests_scratch_data/B.energy_balance/data/p5k_native_grid/E3SM_IC.nc"
 )
 
+# set fill values for all vars
+ds = xr.open_dataset(input_path).isel(time=0)
+coords = list(ds.drop_vars("time").coords)
+coord_fill_values = {coord: {"_FillValue": None} for coord in coords}
+data_vars = list(ds.data_vars)
+data_var_fill_values = {
+    data_var: {"_FillValue": -999_999_999} for data_var in data_vars
+}
+encodings = {
+    **coord_fill_values,
+    **data_var_fill_values,
+}
+
 # subset to first timestep and write to output file
-xr.open_dataset(input_path).isel(time=0).drop_vars("time").to_netcdf(
-    output_path, encoding=encodings
-)
+time = ds["time"].item().isoformat()
+ds = ds.drop_vars("time")
+ds = ds.assign_attrs({"ic_date": time})
+ds.to_netcdf(output_path, encoding=encodings)
 
 print(f"Saving initial timestep from {input_path.name}")

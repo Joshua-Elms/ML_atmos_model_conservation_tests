@@ -17,20 +17,17 @@ config = general.read_config(config_path)
 # get models and parameters from config
 models = config["models"]
 # models = ["SFNO"]
-plot_var = "msl"  # choose either "msl" or "ssp", can only use "ssp" if models = ["sfno"] (other models don't output SSP)
+plot_var = "sp"  # choose either "msl" or "ssp", can only use "ssp" if models = ["sfno"] (other models don't output SSP)
 # vis options
 cmap_str = "Dark2"  # options here: matplotlib.org/stable/tutorials/colors/colormaps.html, if "single:" is included, only one color will be used
-day_interval_x_ticks = 15  # how many days between x-ticks on the plot
+day_interval_x_ticks = 7  # how many days between x-ticks on the plot
 spec_int = 5e-4
 individual_standardized_ylims = None  # (1011.5 - 1.5, 1011.5 + 1.5) # y-limits for the plot, set to None to use the model output min/max, normally (1010, 1014)
-mae_standardized_ylims = (
-    0,
-    120,
-)  # y-limits for the MAE plot, set to None to use the model output min/max, normally (0, 5)
-mae_ground_truth = 1011.5  # set None to use IC as ground truth for comparison or a number to use as a constant ground truth value
+mae_standardized_ylims = None  # y-limits for the MAE plot, set to None to use the model output min/max, normally (0, 5)
+mae_ground_truth = None  # set None to use IC as ground truth for comparison or a number to use as a constant ground truth value
 show_legend = True
 plot_base_fields = (
-    False  # whether to plot the base fields (pointwise data) for each model
+    True  # whether to plot the base fields (pointwise data) for each model
 )
 drop_FCN = False
 if drop_FCN:  # FCN blows up in this test
@@ -44,9 +41,17 @@ relabel_Pangu6 = (
 exp_dir = Path(config["experiment_dir"]) / config["experiment_name"]
 plot_dir = exp_dir / "plots"  # where to save plots
 
-ic_dates = [
-    dt.datetime.strptime(str_date, "%Y-%m-%dT%Hz") for str_date in config["ic_dates"]
-]
+if config["ic_type"] == "dt":
+    ic_dates = [
+        dt.datetime.strptime(str_date, "%Y-%m-%dT%Hz")
+        for str_date in config["ic_dates"]
+    ]
+elif config["ic_type"] == "xr":
+    ic_dates = [
+        dt.datetime.fromisoformat(
+            xr.open_dataset(Path(config["xr_file"])).attrs["ic_date"]
+        )
+    ]
 all_lead_times = np.arange(0, config["n_timesteps"] + 1) * 6  # in hours
 n_ics = len(ic_dates)
 n_timesteps = config["n_timesteps"]
@@ -70,7 +75,9 @@ for model in models:
         lead_times = all_lead_times[::4]
     else:
         lead_times = all_lead_times.copy()  # in hours
-    ds = ds.assign_coords(lead_time=all_lead_times if model != "Pangu24" else all_lead_times*4)
+    ds = ds.assign_coords(
+        lead_time=all_lead_times if model != "Pangu24" else all_lead_times * 4
+    )
     # print(model)
     # print(ds.lead_time.values)
     # print(lead_times)
@@ -205,7 +212,9 @@ for m, model in enumerate(models):
         initial_value = mae_ground_truth
     else:
         initial_value = ds[f"MEAN_{plot_var}"].isel(lead_time=0)
-    ds = ds.assign_coords(lead_time=all_lead_times if model != "Pangu24" else all_lead_times*4)
+    ds = ds.assign_coords(
+        lead_time=all_lead_times if model != "Pangu24" else all_lead_times * 4
+    )
     differences = ds[f"MEAN_{plot_var}"] - initial_value
     abs_differences = np.abs(differences)
     mae = abs_differences.mean(dim="init_time").sel(lead_time=lead_times).squeeze()

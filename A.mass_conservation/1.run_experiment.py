@@ -33,20 +33,47 @@ def run_experiment(model_name: str, config_path: str) -> str:
     # load the model
     model = general.load_model(model_name)
 
-    # load the initial condition times
-    ic_dates = [
-        dt.datetime.strptime(str_date, "%Y-%m-%dT%Hz")
-        for str_date in config["ic_dates"]
-    ]
+    # set up output directory
     tmp_output_dir = Path(
         config.get("tmp_dir", output_dir)
     )  # if tmp_dir not specified, use output_dir
     tmp_output_dir.mkdir(parents=False, exist_ok=True)
-    tmp_output_files = [
-        tmp_output_dir
-        / f"{model_name}_output_{ic_date.strftime('%Y%m%dT%H')}_tmp_{np.random.randint(10000)}.nc"
-        for ic_date in ic_dates
-    ]
+
+    # check whether to use set of datetimes for ERA5 as ICs, or load xr dataset
+    ic_type = config["ic_type"]  # dt or xr
+    if ic_type == "dt":
+        if config["ic_dates"] == "None":
+            raise ValueError(
+                "When running 'dt' (datetime) simulation, must provide list of datetime(s) formatted as '%Y-%m-%dT%Hz'. Please check your 0.config.yaml file."
+            )
+        # load the initial condition times
+        ic_dates = [
+            dt.datetime.strptime(str_date, "%Y-%m-%dT%Hz")
+            for str_date in config["ic_dates"]
+        ]
+        print(
+            f"Running in 'dt' inference mode with {len(ic_dates)} initial conditions."
+        )
+        tmp_output_files = [
+            tmp_output_dir
+            / f"{model_name}_output_{ic_date.strftime('%Y%m%dT%H')}_tmp_{np.random.randint(10000)}.nc"
+            for ic_date in ic_dates
+        ]
+    elif ic_type == "xr":
+        # load IC file
+        if config["xr_file"] is None:
+            raise ValueError(
+                "When running 'xr' (xarray) simulation, must provide valid path to initial condition file. Please check your 0.config.yaml file."
+            )
+        print("Running in 'xr' inference mode.")
+        ic_path = Path(config["xr_file"])
+        ic_ds = xr.open_dataset(ic_path)
+        ic_dates = [dt.datetime.fromisoformat(ic_ds.attrs["ic_date"])]
+        tmp_output_files = [
+            tmp_output_dir
+            / f"{model_name}_output_{ic_dates[i].strftime('%Y%m%dT%H')}_tmp_{np.random.randint(10000)}.nc"
+            for i in range(len(ic_dates))
+        ]
 
     # figure out which variables to keep, given that this model may not output
     # all variables requested in config
@@ -68,32 +95,34 @@ def run_experiment(model_name: str, config_path: str) -> str:
         # get ERA5 data from the ECMWF CDS
         data_source = CDS(verbose=False)
 
-        # allows hook func to know whether it's the first call
-        global initial
-        initial = True
-
-        # allows hook func to find index of pressure fields
-        global pressure_indices
-        pressure_indices = [
-            idx for idx, var in enumerate(model_vars) if var in ["sp", "msl"]
-        ]
-
-        # set front hook to pressure multiplier
-        def pressure_multiplier(x, coords):
+        # only prepare model hook for dt, not xr since pert should be baked into IC there
+        if ic_type == "dt":
+            # allows hook func to know whether it's the first call
             global initial
-            global pressure_indices
-            if initial:
-                initial = False
-                print(f"\n\n Shape of x: {x.shape}\n")
-                print(
-                    f"Applying pressure multiplier of {config['pressure_multiplier']} to indices {pressure_indices}\n\n"
-                )
-                x[..., pressure_indices, :, :] *= config["pressure_multiplier"]
-                return x, coords
-            else:
-                return x, coords
+            initial = True
 
-        model.front_hook = pressure_multiplier
+            # allows hook func to find index of pressure fields
+            global pressure_indices
+            pressure_indices = [
+                idx for idx, var in enumerate(model_vars) if var in ["sp", "msl"]
+            ]
+
+            # set front hook to pressure multiplier
+            def pressure_multiplier(x, coords):
+                global initial
+                global pressure_indices
+                if initial:
+                    initial = False
+                    print(f"\n\n Shape of x: {x.shape}\n")
+                    print(
+                        f"Applying pressure multiplier of {config['pressure_multiplier']} to indices {pressure_indices}\n\n"
+                    )
+                    x[..., pressure_indices, :, :] *= config["pressure_multiplier"]
+                    return x, coords
+                else:
+                    return x, coords
+
+            model.front_hook = pressure_multiplier
 
         # run the model for all initial conditions at once
         run.deterministic(
@@ -201,7 +230,9 @@ def run_experiment(model_name: str, config_path: str) -> str:
 
         # postprocess data
         for var in keep_vars_cp:
-            if var in ["msl", "ssp", "sp"]:
+            if (
+                var in ["msl", "ssp", "sp"] and ic_type == "dt"
+            ):  # perts inherent to xr type
                 print(f"Model: {model_name}")
                 print(
                     f"Mean before: {var} at lead_time=0: {tmp_ds[var].isel(lead_time=0).values.mean()}"

@@ -145,4 +145,4 @@ for model in models:
     model_var_names = model_info.MODEL_VARIABLES.get(model)["names"]
     e3sm_names = [e2s_to_e3sm[e2s_name] for e2s_name in model_var_names]
     model_ds = full_ds[e3sm_names]
-    model_ds.to_netcdf(output_directory / f"{model}_pert={pert}")
+    model_ds.to_netcdf(output_directory / f"{model}_pert={pert}.nc")

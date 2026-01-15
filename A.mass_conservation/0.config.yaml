@@ -1,18 +1,18 @@
 experiment_dir: data/
-experiment_name: SFNO_FCNv2_ACE2
-ic_dates: [
-  '2020-01-01T00z',
-  '2020-07-01T00z'
-  ]
-models: ["SFNO", "FCNv2_SM", "ACE2"] # ["SFNO"] or ["SFNO", "FCNv2_SM", "ACE2"]
-n_timesteps: 360
+experiment_name: SFNO_xr_perturbed
+ic_type: "xr"
+dt_dates: None
+xr_file: /N/slate/jmelms/projects/IC/E3SM/perturbed/SFNO_pert=True.nc
+ic_dates: None
+models: ["SFNO"] # ["SFNO"] or ["SFNO", "FCNv2_SM", "ACE2"]
+n_timesteps: 100
 device: cuda:0
 debug_run: False
-overwrite: False # change to false!
+overwrite: True # change to false!
 keep_vars: ["sp", "msl", "ssp"]
 surface_geopotential_path: "/N/slate/jmelms/projects/dcmip2025_idealized_tests/experiments/A.mass_conservation/surface_geopotential.nc"
 pressure_multiplier: 1.0
-keep_base_fields: False
+keep_base_fields: True
 compute_sp_moist: True
 experiment_subdirectories: 
   - "plots"
