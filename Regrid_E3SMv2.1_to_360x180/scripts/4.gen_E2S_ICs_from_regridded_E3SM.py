@@ -14,6 +14,7 @@ e2s_to_e3sm = dict(
     sp="PS",
     msl="PSL",
     tcwv="TMQ",
+    tp06="TP06",
 )
 for lev in model_info.STANDARD_13_LEVELS:
     for var in ["u", "v", "t", "q", "r", "z"]:
@@ -39,12 +40,20 @@ regridded_e3sm_path = regridded_e3sm_path / "E3SM_IC.nc"
 models = ["SFNO", "Pangu24"]
 
 # location to save ICs to
-output_directory = (
-    Path("/N/slate/jmelms/projects/IC/E3SM") / "perturbed" if pert else "unperturbed"
+output_directory = Path("/N/slate/jmelms/projects/IC/E3SM") / (
+    "perturbed" if pert else "unperturbed"
 )
 
 ### create super-duper IC with all fields
 full_ds = xr.open_dataset(regridded_e3sm_path)
+
+# add tp06 field from convective (C) and large-scale (L) precipitation, units m/s -> m/6 hrs
+RR = full_ds["PRECC"] + full_ds["PRECL"]
+TP06 = RR * 60 * 60 * 6
+TP06 = TP06.assign_attrs(
+    long_name="Accumulated 6-hourly total precipitation", units="m"
+)
+full_ds["TP06"] = TP06
 
 # see if we have a problem with extreme values at the poles
 tmax = full_ds["T1000"].max().item()
@@ -118,12 +127,22 @@ for lev in model_info.STANDARD_13_LEVELS:
     for var in "UVZQTR":
         if f"{var}{lev:03}" not in full_ds.data_vars:
             print(f"{var}{lev:03} not found in dataset")
-            
-models = ["SFNO", "Pangu6", "Pangu6x", "Pangu24", "FuXi", "FuXiShort", "FuXiMedium", "FuXiLong", "FCN3", "GraphCastOperational", "FCN"]
+
+models = [
+    "SFNO",
+    "Pangu6",
+    "Pangu6x",
+    "Pangu24",
+    "FuXi",
+    "FuXiShort",
+    "FuXiMedium",
+    "FuXiLong",
+    "FCN3",
+    "FCN",
+]
 for model in models:
-    print(model)
-    breakpoint()
+    print(f"Saving {'pert' if pert else 'unpert'} IC for: {model}")
     model_var_names = model_info.MODEL_VARIABLES.get(model)["names"]
     e3sm_names = [e2s_to_e3sm[e2s_name] for e2s_name in model_var_names]
     model_ds = full_ds[e3sm_names]
-
+    model_ds.to_netcdf(output_directory / f"{model}_pert={pert}")

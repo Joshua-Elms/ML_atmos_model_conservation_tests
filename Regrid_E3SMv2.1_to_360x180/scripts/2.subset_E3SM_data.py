@@ -7,10 +7,9 @@ import xarray as xr
 from pathlib import Path
 
 
-
 # unperturbed
 input_path = Path(
-    "/N/slate/jmelms/projects/ML_atmos_model_conservation_tests/B.energy_balance/data/E3SM_runs/v2.1.WCYCLSSP370_20180201-20180401_12n32p_original_20260113/run/v2.1.WCYCLSSP370_20180201-20180401_12n32p_original_20260113.eam.h1.2018-02-01-00000.nc"
+    "/N/slate/jmelms/projects/ML_atmos_model_conservation_tests/B.energy_balance/data/E3SM_runs/v2.1.WCYCLSSP370_20180201-20180401_12n32p_original_20260114/run/v2.1.WCYCLSSP370_20180201-20180401_12n32p_original_20260114.eam.h1.2018-02-01-00000.nc"
 )
 output_path = Path(
     "/N/scratch/jmelms/ML_atmos_model_conservation_tests_scratch_data/B.energy_balance/data/original_native_grid/E3SM_IC.nc"
@@ -21,24 +20,33 @@ ds = xr.open_dataset(input_path)
 coords = list(ds.coords)
 coord_fill_values = {coord: {"_FillValue": None} for coord in coords if coord != "time"}
 data_vars = list(ds.data_vars)
-data_var_fill_values = {data_var: {"_FillValue": -999_999_999} for data_var in data_vars}
-encodings = {**coord_fill_values, **data_var_fill_values,}
+data_var_fill_values = {
+    data_var: {"_FillValue": -999_999_999} for data_var in data_vars
+}
+encodings = {
+    **coord_fill_values,
+    **data_var_fill_values,
+}
 
 # subset to first timestep and write to output file
-xr.open_dataset(input_path).isel(time=0).drop_vars("time").to_netcdf(output_path, encoding=encodings)
+xr.open_dataset(input_path).isel(time=0).drop_vars("time").to_netcdf(
+    output_path, encoding=encodings
+)
 
 print(f"Saving initial timestep from {input_path.name}")
 
 
 # perturbed
 input_path = Path(
-    "/N/slate/jmelms/projects/ML_atmos_model_conservation_tests/B.energy_balance/data/E3SM_runs/v2.1.WCYCLSSP370_20180201-20180401_12n32p_trial_06/run/v2.1.WCYCLSSP370_20180201-20180401_12n32p_trial_06.eam.h1.2018-02-01-00000.nc"
+    "/N/slate/jmelms/projects/ML_atmos_model_conservation_tests/B.energy_balance/data/E3SM_runs/v2.1.WCYCLSSP370_20180201-20180401_12n32p_trial_07/run/v2.1.WCYCLSSP370_20180201-20180401_12n32p_trial_07.eam.h1.2018-02-01-00000.nc"
 )
 output_path = Path(
     "/N/scratch/jmelms/ML_atmos_model_conservation_tests_scratch_data/B.energy_balance/data/p5k_native_grid/E3SM_IC.nc"
 )
 
 # subset to first timestep and write to output file
-xr.open_dataset(input_path).isel(time=0).drop_vars("time").to_netcdf(output_path, encoding=encodings)
+xr.open_dataset(input_path).isel(time=0).drop_vars("time").to_netcdf(
+    output_path, encoding=encodings
+)
 
 print(f"Saving initial timestep from {input_path.name}")
