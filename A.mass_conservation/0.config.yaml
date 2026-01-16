@@ -1,7 +1,6 @@
 experiment_dir: data/
 experiment_name: SFNO_xr_perturbed
 ic_type: "xr"
-dt_dates: None
 xr_file: /N/slate/jmelms/projects/IC/E3SM/perturbed/SFNO_pert=True.nc
 ic_dates: None
 models: ["SFNO"] # ["SFNO"] or ["SFNO", "FCNv2_SM", "ACE2"]

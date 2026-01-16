@@ -36,9 +36,6 @@ else:
 
 regridded_e3sm_path = regridded_e3sm_path / "E3SM_IC.nc"
 
-# models to create ICs for
-models = ["SFNO", "Pangu24"]
-
 # location to save ICs to
 output_directory = Path("/N/slate/jmelms/projects/IC/E3SM") / (
     "perturbed" if pert else "unperturbed"
@@ -140,9 +137,16 @@ models = [
     "FCN3",
     "FCN",
 ]
+full_ds["dummy_var"] = full_ds["Z1000"] * np.nan
 for model in models:
     print(f"Saving {'pert' if pert else 'unpert'} IC for: {model}")
     model_var_names = model_info.MODEL_VARIABLES.get(model)["names"]
-    e3sm_names = [e2s_to_e3sm[e2s_name] for e2s_name in model_var_names]
-    model_ds = full_ds[e3sm_names]
+    model_ds = full_ds[["dummy_var"]]
+    for e2s_varname in model_var_names:
+        model_ds[e2s_varname] = full_ds[e2s_to_e3sm[e2s_varname]]
+    model_ds = model_ds.drop_vars("dummy_var")
+    model_ds = model_ds.expand_dims(dim="time", axis=0)
+    model_ds = model_ds.assign_coords(
+        {"time": [np.datetime64(model_ds.attrs["ic_date"])]}
+    )
     model_ds.to_netcdf(output_directory / f"{model}_pert={pert}.nc")

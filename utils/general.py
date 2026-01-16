@@ -784,15 +784,16 @@ def surface_aware_integrate(da, z, zs, model_levels_pa, surface_field=None):
     # ps = extended_z_np[j0].reshape(single_level_shape) + (
     #     dpdz * (zs.data - extended_z_np[j0].reshape(single_level_shape))
     # )
-    ps = take_along_j0(full_levels_pa) + (dpdz * (zs.data - take_along_j0(extended_z_np)))
+    ps = take_along_j0(full_levels_pa) + (
+        dpdz * (zs.data - take_along_j0(extended_z_np))
+    )
     if surface_field is not None:  # model returns surface field, like t2m or u10m
         fs = surface_field.data
     else:  # model does not return surface field, -polate
         da_0 = take_along_j0(extended_da_np)
         da_1 = take_along_j1(extended_da_np)
         dfdz = (da_1 - da_0) / (
-            take_along_j1(extended_z_np)
-            - take_along_j0(extended_z_np)
+            take_along_j1(extended_z_np) - take_along_j0(extended_z_np)
         )
         fs = da_0 + (dfdz * (zs.data - take_along_j0(extended_z_np)))
 

@@ -25,9 +25,7 @@ col_areas = upert_ds["area"].isel(time=0)
 normed_col_areas = col_areas / col_areas.sum()
 
 # Pressure levels for integration #
-model_levels = [
-    level for level in model_info.STANDARD_13_LEVELS if level not in [150, 250]
-]  #
+model_levels = model_info.STANDARD_13_LEVELS
 model_levels_pa = 100 * np.array(
     model_levels
 )  # convert to Pa from hPa, used for integration
@@ -42,6 +40,21 @@ sb_const = (
 )
 
 for i, full_ds in enumerate([upert_ds, pert_ds]):
+    # Add level nearest to missing for variables like Q, V, Z, not outputted by E3SM for some reason
+    vars_and_data = {
+        "Q": {"missing_levs": [150, 250], "data": full_ds["Q"]},
+        "Z": {"missing_levs": [150, 250], "data": full_ds["Z3"]},
+        "V": {"missing_levs": [150], "data": full_ds["V"]},
+    }
+    for var, vinfo in vars_and_data.items():
+        data = vinfo["data"]
+        for lev in vinfo["missing_levs"]:
+            nearest_level_idx = np.argmin(np.abs(lev - data.lev.values))
+            print(
+                f"Using {var} @ {data.lev.values[nearest_level_idx]:0.1f} hPa as {var}{lev}"
+            )
+            full_ds[f"{var}{lev}"] = data.isel(lev=nearest_level_idx)
+    
     # Subset relevant variables and rename to E2S standards
     vars_in_ds = (
         set(map(str.upper, model_info.MASTER_VARIABLES_NAMES)) & set(full_ds.data_vars)

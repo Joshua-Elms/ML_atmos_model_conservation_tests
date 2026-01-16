@@ -31,20 +31,47 @@ def run_experiment(model_name: str, config_path: str) -> str:
     model = general.load_model(model_name)
     model_vars = model_info.MODEL_VARIABLES[model_name]["names"]
 
-    # load the initial condition times
-    ic_dates = [
-        dt.datetime.strptime(str_date, "%Y-%m-%dT%Hz")
-        for str_date in config["ic_dates"]
-    ]
+    # set up output directory
     tmp_output_dir = Path(
         config.get("tmp_dir", output_dir)
     )  # if tmp_dir not specified, use output_dir
     tmp_output_dir.mkdir(parents=False, exist_ok=True)
-    tmp_output_files = [
-        tmp_output_dir
-        / f"{model_name}_output_{ic_date.strftime('%Y%m%dT%H')}_tmp_{np.random.randint(10000)}.nc"
-        for ic_date in ic_dates
-    ]
+
+    # check whether to use set of datetimes for ERA5 as ICs, or load xr dataset
+    ic_type = config["ic_type"]  # dt or xr
+    if ic_type == "dt":
+        if config["ic_dates"] == "None":
+            raise ValueError(
+                "When running 'dt' (datetime) simulation, must provide list of datetime(s) formatted as '%Y-%m-%dT%Hz'. Please check your 0.config.yaml file."
+            )
+        # load the initial condition times
+        ic_dates = [
+            dt.datetime.strptime(str_date, "%Y-%m-%dT%Hz")
+            for str_date in config["ic_dates"]
+        ]
+        print(
+            f"Running in 'dt' inference mode with {len(ic_dates)} initial conditions."
+        )
+        tmp_output_files = [
+            tmp_output_dir
+            / f"{model_name}_output_{ic_date.strftime('%Y%m%dT%H')}_tmp_{np.random.randint(10000)}.nc"
+            for ic_date in ic_dates
+        ]
+    elif ic_type == "xr":
+        # load IC file
+        if config["xr_file"] is None:
+            raise ValueError(
+                "When running 'xr' (xarray) simulation, must provide valid path to initial condition file. Please check your 0.config.yaml file."
+            )
+        print("Running in 'xr' inference mode.")
+        ic_path = Path(config["xr_file"])
+        ic_ds = xr.open_dataset(ic_path)
+        ic_dates = [dt.datetime.fromisoformat(ic_ds.attrs["ic_date"])]
+        tmp_output_files = [
+            tmp_output_dir
+            / f"{model_name}_output_{ic_dates[i].strftime('%Y%m%dT%H')}_tmp_{np.random.randint(10000)}.nc"
+            for i in range(len(ic_dates))
+        ]
 
     # load surface geopotential height data if needed
     zs_path = Path(config["surface_geopotential_path"])
@@ -66,29 +93,34 @@ def run_experiment(model_name: str, config_path: str) -> str:
         # interface between model and data
         io = NetCDF4Backend(fpath)
 
-        # get ERA5 data from the ECMWF CDS
-        data_source = CDS(verbose=False)
+        # only prepare model hook for dt, not xr since pert should be baked into IC there
+        if ic_type == "dt":
+            # get ERA5 data from the ECMWF CDS
+            data_source = CDS(verbose=False)
 
-        # allows hook func to know whether it's the first call
-        global initial
-        initial = True
-
-        # set front hook to temperature perturber
-        def temp_perturber(x, coords):
+            # allows hook func to know whether it's the first call
             global initial
-            global pert_var_idxs
-            if initial:
-                initial = False
-                print(f"\n\n Shape of x: {x.shape}\n")
-                print(
-                    f"Applying temperature perturbation to indices {pert_var_idxs}\n\n"
-                )
-                x[..., pert_var_idxs, :, :] += config["temp_perturbation_degC"]
-                return x, coords
-            else:
-                return x, coords
+            initial = True
 
-        model.front_hook = temp_perturber
+            # set front hook to temperature perturber
+            def temp_perturber(x, coords):
+                global initial
+                global pert_var_idxs
+                if initial:
+                    initial = False
+                    print(f"\n\n Shape of x: {x.shape}\n")
+                    print(
+                        f"Applying temperature perturbation to indices {pert_var_idxs}\n\n"
+                    )
+                    x[..., pert_var_idxs, :, :] += config["temp_perturbation_degC"]
+                    return x, coords
+                else:
+                    return x, coords
+
+            model.front_hook = temp_perturber
+
+        elif ic_type == "xr":
+            data_source = general.DataSet(ic_ds, model_name)
 
         # run the model for all initial conditions at once
         run.deterministic(
@@ -106,13 +138,17 @@ def run_experiment(model_name: str, config_path: str) -> str:
         tmp_ds = general.sort_latitudes(tmp_ds, model_name, input=False)
 
         # this exists because the inference code outputs the IC before the front hook (so no perturbation applied)
-        if model_name not in [
-            "FuXi",
-            "FuXiShort",
-            "FuXiMedium",
-            "FuXiLong",
-            "GraphCastOperational",
-        ]:
+        if (
+            model_name
+            not in [
+                "FuXi",
+                "FuXiShort",
+                "FuXiMedium",
+                "FuXiLong",
+                "GraphCastOperational",
+            ]
+            and ic_type == "dt"
+        ):  # perts inherent to xr type
             for var in pert_vars:
                 tmp_ds[var][dict(lead_time=0)] = (
                     tmp_ds[var].isel(lead_time=0) + config["temp_perturbation_degC"]
@@ -340,7 +376,9 @@ def run_experiment(model_name: str, config_path: str) -> str:
     print(f"Combined dataset has dimensions: {ds.dims}")
 
     # add model dimension to enable opening with open_mfdataset
-    ds = ds.assign_coords(model=model_name, lead_time=ds.lead_time / np.timedelta64(1, "h")) # convert lead_time to hours
+    ds = ds.assign_coords(
+        model=model_name, lead_time=ds.lead_time / np.timedelta64(1, "h")
+    )  # convert lead_time to hours
 
     # for clarity
     ds = ds.rename({"time": "init_time"})
