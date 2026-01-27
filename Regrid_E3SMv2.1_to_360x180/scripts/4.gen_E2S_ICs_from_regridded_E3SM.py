@@ -23,7 +23,7 @@ for lev in model_info.STANDARD_13_LEVELS:
         )
 
 # choose unperturbed or perturbed run
-pert = True
+pert = False
 
 if pert:
     regridded_e3sm_path = Path(
@@ -87,6 +87,10 @@ for var, vinfo in vars_and_data.items():
         )
         full_ds[f"{var}{lev}"] = data.isel(lev=nearest_level_idx)
 
+# convert E3SM's z (geopotential height) to Z (geopotential energy)
+for lev in model_info.STANDARD_13_LEVELS:
+    full_ds[f"Z{lev:03}"] = 9.80665 * full_ds[f"Z{lev:03}"]  # 9.80665 m/s^2
+
 # add relative humidity (R) field on levels
 for lev in model_info.STANDARD_13_LEVELS:
     p = int(lev) * metpy.units.units("hPa")  # convert hPa to Pa
@@ -137,6 +141,7 @@ models = [
     "FCN3",
     "FCN",
 ]
+breakpoint()
 full_ds["dummy_var"] = full_ds["Z1000"] * np.nan
 for model in models:
     print(f"Saving {'pert' if pert else 'unpert'} IC for: {model}")

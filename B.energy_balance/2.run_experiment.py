@@ -260,6 +260,12 @@ def run_experiment(model_name: str, config_path: str) -> str:
         # create new dataset from level blocks
         ds_3d = xr.Dataset(level_blocks)
         ds_3d["tcwv"] = tmp_ds["tcwv"]
+        # add all other single-level variables to dataset so that "keep_base_fields" has all fields to work with
+        sl_vars = list(
+            (set(model_info.SL_VARIABLES).intersection(set(model_vars))) - {"tcwv"}
+        )
+        for var in sl_vars:
+            ds_3d[var] = tmp_ds[var]
 
         # Set constants
         cp = 1005.0  # J/kg/K

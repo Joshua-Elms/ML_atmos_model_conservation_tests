@@ -33,6 +33,7 @@ encodings = {
 time = ds["time"].item().isoformat()
 ds = ds.drop_vars("time")
 ds = ds.assign_attrs({"ic_date": time})
+breakpoint()
 ds.to_netcdf(output_path, encoding=encodings)
 
 print(f"Saving initial timestep from {input_path.name}")
