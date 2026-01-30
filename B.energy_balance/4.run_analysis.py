@@ -17,6 +17,7 @@ config = general.read_config(config_path)
 # get models and parameters from config
 models = config["models"]
 perturbed = config["temp_perturbation_degC"] != 0
+perturbation = config["temp_perturbation_degC"]
 
 # set up directories
 exp_dir = Path(config["experiment_dir"]) / config["experiment_name"]
@@ -93,7 +94,7 @@ for i, name in enumerate(energy_term_names):
             f"\t\t{model} (t={{0,-1}}){' ' * (16 - len(model))}: {fmt_numbers(model_ds[f"AW_{name}_energy"].sel(model=model, lead_time=all_lead_times_h[[0, -1]]).squeeze().values)}"
         )
 
-    # Plot 1: Unperturbed energy trend lineplots for each energy term
+    # Plot 1: Energy trend lineplots for each energy term
     fig, ax = plt.subplots(figsize=(10, 6))
     ax.plot(
         all_lead_times_h,
@@ -136,7 +137,7 @@ for i, name in enumerate(energy_term_names):
                 label=model,
             )
     ax.set_title(
-        f"Area-weighted {name} Energy ({'Perturbed' if perturbed else 'Unperturbed'})"
+        f"Area-weighted {name} Energy ({'+' if perturbation > 0 else ''}{perturbation}K perturbation)"
     )
     ax.set_xlabel("Lead Time (days)")
     ax.set_xticks(all_lead_times_h[:: 4 * 7], all_lead_times_d[:: 4 * 7].round(0))
@@ -144,8 +145,11 @@ for i, name in enumerate(energy_term_names):
     ax.set_ylim(energy_ylims[name])
     ax.legend()
     plt.tight_layout()
-    fig.savefig(plot_dir / f"unperturbed_{name}_energy_trends.png")
-    print(f"Saved unperturbed {name} energy trend plot.")
+    fig.savefig(
+        plot_dir
+        / (("un" if not perturbed else "") + f"perturbed_{name}_energy_trends.png")
+    )
+    print(f"Saved {name} energy trend plot.")
 
 for model in models:
     titles = [

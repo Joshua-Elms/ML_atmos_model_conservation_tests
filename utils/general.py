@@ -197,6 +197,10 @@ def run_experiment_controller(
         # loop over models and run the experiment for each
         for model_name in config["models"]:
             # code in third arg from: https://stackoverflow.com/questions/27189044/import-with-dot-name-in-python
+            fpaths = [path.stem for path in calling_directory.glob("*")]
+            run_exper_checks = [int(path[0]) if path[2:] == "run_experiment" else 0 for path in fpaths]
+            run_exper_num = sum(run_exper_checks)
+            
             subprocess.run(
                 [
                     "python",
@@ -205,7 +209,7 @@ def run_experiment_controller(
 import importlib.util;
 spec = importlib.util.spec_from_file_location(
     name='run_experiment_pyfile',
-    location='{str((calling_directory / '1.run_experiment.py').resolve())}'
+    location='{str((calling_directory / (f'{run_exper_num}' + '.run_experiment.py')).resolve())}'
 );
 module = importlib.util.module_from_spec(spec);
 spec.loader.exec_module(module);
